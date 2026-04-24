@@ -200,6 +200,32 @@ def mark_entry_blacklisted(entry_key, blacklisted=True):
     conn.close()
 
 
+def list_entries_by_recency():
+    """Return cached entries ordered from newest to oldest."""
+    conn = connect(create=False)
+    if conn is None:
+        return []
+    rows = conn.execute(
+        """
+        SELECT entry_key, entry_id, feed_id, updated_ts, entry_xml, blacklisted
+        FROM entries
+        ORDER BY updated_ts DESC, entry_key DESC
+        """
+    ).fetchall()
+    conn.close()
+    return rows
+
+
+def entries_count():
+    """Return total number of cached entry rows."""
+    conn = connect(create=False)
+    if conn is None:
+        return 0
+    row = conn.execute("SELECT COUNT(*) FROM entries").fetchone()
+    conn.close()
+    return row[0] if row else 0
+
+
 def destroy_database():
     """Remove the SQLite cache database file if it exists."""
     path = database_path()

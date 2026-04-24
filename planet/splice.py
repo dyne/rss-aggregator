@@ -2,7 +2,7 @@
 import glob, os, time, shutil
 from xml.dom import minidom
 import planet
-from . import config, reconstitute, shell
+from . import config, reconstitute, shell, storage
 from planet import feedparser
 from .reconstitute import createTextElement, date
 from .spider import filename
@@ -15,10 +15,16 @@ def splice():
 
     log.info("Loading cached data")
     cache = config.cache_directory()
-    dir=[(os.stat(file).st_mtime,file) for file in glob.glob(cache+"/*")
-        if not os.path.isdir(file)]
-    dir.sort()
-    dir.reverse()
+    sqlite_entries = storage.list_entries_by_recency()
+    if sqlite_entries:
+        entries_to_process = sqlite_entries
+    else:
+        entries_to_process = [
+            (None, None, None, os.stat(file).st_mtime, file, 0)
+            for file in glob.glob(cache + "/*")
+            if not os.path.isdir(file) and os.path.basename(file) != "cache.sqlite3"
+        ]
+        entries_to_process.sort(key=lambda row: row[3], reverse=True)
 
     max_items=max([config.items_per_page(templ)
         for templ in config.template_files() or ['Planet']])
@@ -93,13 +99,23 @@ def splice():
     count = {}
     atomNS='http://www.w3.org/2005/Atom'
     new_feed_items = config.new_feed_items()
-    for mtime,file in dir:
+    for entry_key, _entry_id, _feed_id, _updated_ts, source, blacklisted in entries_to_process:
+        if blacklisted:
+            continue
         if index != None:
-            base = os.path.basename(file)
-            if base in index and index[base] not in sub_ids: continue
-
+            key = entry_key
+            if not key:
+                key = os.path.basename(source)
+            if key in index and index[key] not in sub_ids:
+                continue
+        source_name = source
         try:
-            entry=minidom.parse(file)
+            if entry_key:
+                entry = minidom.parseString(source)
+                source_name = entry_key
+            else:
+                entry = minidom.parse(source)
+                source_name = source
 
             # verify that this entry is currently subscribed to and that the
             # number of entries contributed by this feed does not exceed
@@ -126,7 +142,7 @@ def splice():
             items = items + 1
             if items >= max_items: break
         except:
-            log.error("Error parsing %s", file)
+            log.error("Error parsing %s", source_name)
 
     if index: index.close()
 
