@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC
+    "-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
+    "http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<script type="text/javascript" src="docs.js"></script>
+<link rel="stylesheet" type="text/css" href="docs.css"/>
+<title>Venus Output</title>
+</head>
+<body>
+<h2>Output Files</h2>
+<p>Venus writes two built-in files into <code>output_dir</code> on every
+successful run:</p>
+<dl>
+<dt><code>rss.xml</code></dt>
+<dd>The aggregated RSS feed.  This is the canonical syndication output and the
+default file announced to PubSubHubbub hubs.</dd>
+<dt><code>feed.json</code></dt>
+<dd>A JSON Feed style document for applications and downstream tooling.  It
+includes item attachments, source metadata, and screenshots when available.</dd>
+</dl>
+
+<h3>What metadata is preserved</h3>
+<p>The built-in writers preserve the normalized aggregate feed title, link,
+owner metadata, entry titles, summaries, content, links, categories, authors,
+enclosures, and source information.  Venus also carries source screenshots when
+they can be derived from feed metadata such as <code>logo</code> or
+<code>icon</code>, or from a limited Open Graph lookup of the source page.</p>
+
+<h3>No theme selection</h3>
+<p>Older Venus releases could render multiple themed outputs through template
+engines.  The maintained output model is now fixed: one RSS file and one JSON
+file.  Output customization happens by changing the normalized feed data
+through filters, not by choosing a theme.</p>
+</body>
+</html>
