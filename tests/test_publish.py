@@ -33,9 +33,8 @@ class PublishTest(unittest.TestCase):
             handle.write(name)
 
     def test_publish_posts_configured_feeds(self):
-        self.touch('atom.xml')
-        self.touch('rss20.xml')
-        self.touch('index.html')
+        self.touch('rss.xml')
+        self.touch('feed.json')
 
         publish.publish(FakeConfig(self.output))
 
@@ -44,13 +43,10 @@ class PublishTest(unittest.TestCase):
         self.assertEqual('http://hub.example/', request.full_url)
         data = urllib.parse.parse_qs(request.data.decode('utf-8'))
         self.assertEqual(['publish'], data['hub.mode'])
-        self.assertEqual([
-            'http://planet.example/atom.xml',
-            'http://planet.example/rss20.xml',
-        ], sorted(data['hub.url']))
+        self.assertEqual(['http://planet.example/rss.xml'], data['hub.url'])
 
     def test_publish_skips_when_no_matching_feeds(self):
-        self.touch('index.html')
+        self.touch('feed.json')
         publish.publish(FakeConfig(self.output))
         self.assertEqual([], self.requests)
 
@@ -68,4 +64,4 @@ class FakeConfig:
         return self.output
 
     def pubsubhubbub_feeds(self):
-        return ['atom.xml', 'rss20.xml']
+        return ['rss.xml']
