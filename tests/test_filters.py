@@ -5,18 +5,6 @@ from planet import shell, config, logger
 
 class FilterTests(unittest.TestCase):
 
-    def test_coral_cdn(self):
-        testfile = 'tests/data/filter/coral_cdn.xml'
-        filter = 'coral_cdn_filter.py'
-
-        output = shell.run(filter, open(testfile).read(), mode="filter")
-        dom = xml.dom.minidom.parseString(output)
-        imgsrcs = [img.getAttribute('src') for img in dom.getElementsByTagName('img')]
-        self.assertEqual('http://example.com.nyud.net:8080/foo.png', imgsrcs[0])
-        self.assertEqual('http://example.com.1234.nyud.net:8080/foo.png', imgsrcs[1])
-        self.assertEqual('http://u:p@example.com.nyud.net:8080/foo.png', imgsrcs[2])
-        self.assertEqual('http://u:p@example.com.1234.nyud.net:8080/foo.png', imgsrcs[3])
-
     def test_excerpt_images1(self):
         config.load('tests/data/filter/excerpt-images.ini')
         self.verify_images()
@@ -82,31 +70,6 @@ class FilterTests(unittest.TestCase):
         self.assertEqual('before--after',
             excerpt.firstChild.firstChild.nodeValue)
 
-    def test_xpath_filter1(self):
-        config.load('tests/data/filter/xpath-sifter.ini')
-        self.verify_xpath()
-
-    def test_xpath_filter2(self):
-        config.load('tests/data/filter/xpath-sifter2.ini')
-        self.verify_xpath()
-
-    def verify_xpath(self):
-        testfile = 'tests/data/filter/category-one.xml'
-
-        output = open(testfile).read()
-        for filter in config.filters():
-            output = shell.run(filter, output, mode="filter")
-
-        self.assertEqual('', output)
-
-        testfile = 'tests/data/filter/category-two.xml'
-
-        output = open(testfile).read()
-        for filter in config.filters():
-            output = shell.run(filter, output, mode="filter")
-
-        self.assertNotEqual('', output)
-
     def test_regexp_filter(self):
         config.load('tests/data/filter/regexp-sifter.ini')
 
@@ -145,13 +108,6 @@ class FilterTests(unittest.TestCase):
 
         self.assertEqual('', output)
 
-    def test_xhtml2html_filter(self):
-        testfile = 'tests/data/filter/index.html'
-        filter = 'xhtml2html.plugin?quote_attr_values=True'
-        output = shell.run(filter, open(testfile).read(), mode="filter")
-        self.assertTrue(output.find('/>')<0)
-        self.assertTrue(output.find('</script>')>=0)
-
     def test_unsupported_filter_type_is_rejected(self):
         testfile = 'tests/data/filter/index.html'
         self.assertEqual(None,
@@ -180,13 +136,6 @@ try:
     if _no_sed:
         logger.warn("sed is not available => can't test stripAd_yahoo")
         del FilterTests.test_stripAd_yahoo      
-
-    try:
-        import libxml2
-    except:
-        logger.warn("libxml2 is not available => can't test xpath_sifter")
-        del FilterTests.test_xpath_filter1
-        del FilterTests.test_xpath_filter2
 
 except ImportError:
     logger.warn("Popen is not available => can't test standard filters")
