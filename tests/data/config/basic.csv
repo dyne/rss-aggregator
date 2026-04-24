@@ -1,5 +1,5 @@
-url,name,filters
+url,name,excerpt,regexp,sed
 feed1,one
 feed1,one
-feed2,two,bar
-feed2,two,bar
+feed2,two,false,bar,yahoo
+feed2,two,false,bar,yahoo

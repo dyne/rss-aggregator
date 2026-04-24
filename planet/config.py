@@ -26,7 +26,12 @@ from . import output
 
 parser = ConfigParser(interpolation=None)
 
-planet_predefined_options = ['filters']
+planet_predefined_options = ['filters', 'excerpt', 'regexp', 'sed']
+SED_FILTERS = {
+    'feedburner': 'stripAd/feedburner.sed',
+    'google_ad_map': 'stripAd/google_ad_map.sed',
+    'yahoo': 'stripAd/yahoo.sed',
+}
 READING_LIST_TYPES = ('opml', 'csv', 'config')
 
 def __init__():
@@ -334,18 +339,19 @@ def reading_list_type(section):
 
 def filters(section=None):
     filters = []
-    if parser.has_option('Planet', 'filters'):
-        filters += parser.get('Planet', 'filters').split()
-    if filter(section):
+    if regexp(section):
         filters.append('regexp_sifter.py?require=' +
-            urllib.parse.quote(filter(section)))
-    if exclude(section):
-        filters.append('regexp_sifter.py?exclude=' +
-            urllib.parse.quote(exclude(section)))
-    for section in section and [section] or []:
-        if parser.has_option(section, 'filters'):
-            filters += parser.get(section, 'filters').split()
+            urllib.parse.quote(regexp(section)))
+    if sed(section):
+        filters.append(sed_filter(section))
+    if excerpt(section):
+        filters.append('excerpt.py')
     return filters
+
+def sed_filter(section=None):
+    """Return the maintained sed filter path for one section."""
+    script = sed(section)
+    return SED_FILTERS.get(script, '')
 
 def planet_options():
     """ dictionary of planet wide options"""
