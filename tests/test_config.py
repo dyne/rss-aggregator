@@ -123,3 +123,52 @@ class ConfigTest(unittest.TestCase):
         config.load(path)
         self.assertEqual('http://example.com/site/atom.xml', config.feed())
         self.assertEqual(None, config.feedtype())
+
+    def test_sed_and_feed_option_edge_cases(self):
+        path = self.write_config(
+            '[Planet]\n'
+            'custom_value = inherited\n'
+            '\n'
+            '[feed-a]\n'
+            'name = one\n'
+            '\n'
+            '[feed-b]\n'
+            'name = two\n'
+            'custom_value = overridden\n'
+            'sed = yahoo\n'
+        )
+        config.load(path)
+        self.assertEqual('', config.sed_filter('feed-a'))
+        self.assertEqual('stripAd/yahoo.sed', config.sed_filter('feed-b'))
+        self.assertEqual('inherited', config.feed_options('feed-a')['custom_value'])
+        self.assertEqual('overridden', config.feed_options('feed-b')['custom_value'])
+
+    def test_excerpt_boolean_parsing_uses_supported_spellings(self):
+        path = self.write_config(
+            '[Planet]\n'
+            '\n'
+            '[feed-true]\n'
+            'excerpt = yes\n'
+            '\n'
+            '[feed-one]\n'
+            'excerpt = 1\n'
+            '\n'
+            '[feed-on]\n'
+            'excerpt = on\n'
+            '\n'
+            '[feed-false]\n'
+            'excerpt = false\n'
+            '\n'
+            '[feed-zero]\n'
+            'excerpt = 0\n'
+            '\n'
+            '[feed-off]\n'
+            'excerpt = off\n'
+        )
+        config.load(path)
+        self.assertEqual(True, config.excerpt('feed-true'))
+        self.assertEqual(True, config.excerpt('feed-one'))
+        self.assertEqual(True, config.excerpt('feed-on'))
+        self.assertEqual(False, config.excerpt('feed-false'))
+        self.assertEqual(False, config.excerpt('feed-zero'))
+        self.assertEqual(False, config.excerpt('feed-off'))
