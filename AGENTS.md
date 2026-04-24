@@ -14,10 +14,10 @@ filter helpers live in `filters/`, and sample configurations live in
 ## Build, Test, and Development Commands
 
 - `uv sync`: install locked Python 3 runtime dependencies from `uv.lock`.
-- `uv run python runtests.py`: run the full unittest suite.
-- `uv run python runtests.py -v`: run tests with debug logging and verbose
-  output.
-- `uv run python runtests.py test_scrub.py`: run one test module from `tests/`.
+- `uv run pytest`: run the full maintained test suite.
+- `uv run pytest tests/test_scrub.py`: run one test module from `tests/`.
+- `uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml`:
+  generate local coverage reports.
 - `uv run python planet.py pathto/config.ini`: run the aggregator with a local
   configuration.
 
@@ -35,11 +35,13 @@ well-known algorithms and plain control flow over new abstractions.
 
 ## Testing Guidelines
 
-Tests use the standard library `unittest` framework through `runtests.py`.
-Add regression tests beside related coverage in `tests/`, and put reusable
-fixtures in `tests/data/`. Name new test modules `test_<feature>.py` so the
-runner discovers them automatically. For code changes, run the touched test
-module first, then `uv run python runtests.py` before handing off.
+Tests are run with `pytest`, while most existing test modules still use the
+standard library `unittest` style under pytest collection. Add regression tests
+beside related coverage in `tests/`, and put reusable fixtures in `tests/data/`.
+Name new test modules `test_<feature>.py` so pytest discovers them
+automatically. For code changes, run the touched test module first, then
+`uv run pytest` before handing off. When coverage matters, use
+`uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml`.
 
 ## Commit & Pull Request Guidelines
 

@@ -19,7 +19,11 @@ the checkout with uv:
 ```
 Run the test suite with:
 ```
-  uv run python runtests.py
+  uv run pytest
+```
+Generate a coverage report with:
+```
+  uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml
 ```
 Run the aggregator with:
 ```
