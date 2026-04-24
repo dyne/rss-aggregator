@@ -49,12 +49,11 @@ def open():
 
 
 def destroy():
-    """Remove the SQLite cache database used by the id index."""
+    """Remove id-index rows while keeping the shared cache database."""
     from planet import logger as log
 
-    path = storage.database_path()
-    storage.destroy_database()
-    log.info(path + " deleted")
+    storage.clear_id_index()
+    log.info("id index deleted")
 
 
 def create():
