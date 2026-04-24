@@ -15,6 +15,8 @@ def quote(string, apos):
 
 def run(script, doc, output_file=None, options={}):
     """ process an XSLT stylesheet """
+    if isinstance(doc, bytes):
+        doc = doc.decode('utf-8')
 
     try:
         # if available, use the python interface to libxslt
