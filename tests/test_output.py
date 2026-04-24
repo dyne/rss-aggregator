@@ -78,6 +78,7 @@ class OutputTest(unittest.TestCase):
             '<feed xmlns="http://www.w3.org/2005/Atom" '
             'xmlns:planet="http://planet.intertwingly.net/">'
             '<title>Media Planet</title>'
+            '<rights>Copyright Example</rights>'
             '<link rel="alternate" href="http://planet.example/" />'
             '<entry>'
             '<id>tag:example.com,2026:1</id>'
@@ -112,6 +113,13 @@ class OutputTest(unittest.TestCase):
         self.assertEqual(
             ['http://example.com/post-1.jpg', 'http://example.org/source.png'],
             [node.getAttribute('url') for node in thumbnails])
+        self.assertEqual(
+            'Copyright Example',
+            rss.getElementsByTagName('copyright')[0].firstChild.nodeValue)
+        sources = rss.getElementsByTagName('source')
+        self.assertEqual(
+            ['http://example.com/', 'http://example.org/'],
+            [node.getAttribute('url') for node in sources])
 
         with open(os.path.join(workdir, output.JSON_OUTPUT_NAME), encoding='utf-8') as handle:
             feed = json.load(handle)
