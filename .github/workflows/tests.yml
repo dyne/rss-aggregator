@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VIRTUAL_ENV: ${{ github.workspace }}/.venv
-      PYTHONPATH: /usr/lib/python3/dist-packages
 
     steps:
       - name: Check out repository
@@ -42,3 +41,5 @@ jobs:
 
       - name: Run tests
         run: uv run --active python runtests.py
+        env:
+          PYTHONPATH: /usr/lib/python3/dist-packages
