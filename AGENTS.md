@@ -4,12 +4,12 @@
 
 Venus is a Python feed aggregator. Top-level scripts such as `planet.py`,
 `spider.py`, `publish.py`, and `expunge.py` are command entry points. Core
-implementation lives in `planet/`, with shell adapters in `planet/shell/`
-only for maintained filter backends (`.py`, `.plugin`, `.sed`, `.xslt`).
-Built-in output generation lives in `planet/output.py` and always writes
-`rss.xml` plus `feed.json`. Tests are in `tests/`, with fixtures under
-`tests/data/`. User-facing documentation is straight XHTML in `docs/`, feed
-filters live in `filters/`, and sample configurations live in `examples/`.
+implementation lives in `planet/`, with a minimal helper module in
+`planet/shell/` used only by the maintained built-in filter paths. Built-in
+output generation lives in `planet/output.py` and always writes `rss.xml` plus
+`feed.json`. Tests are in `tests/`, with fixtures under `tests/data/`.
+User-facing documentation is straight XHTML in `docs/`, maintained filter
+helpers live in `filters/`, and sample configurations live in `examples/`.
 
 ## Build, Test, and Development Commands
 
@@ -72,3 +72,8 @@ Keep the product surface narrow: Venus aggregates feeds and emits built-in
 are no longer part of the maintained runtime. Media enrichment is limited to
 feed-declared images plus bounded source-page Open Graph lookups cached through
 the normal feed metadata path.
+
+The maintained filter contract is also narrow: use built-in `excerpt`,
+`regexp`, and `sed` config options instead of generic `filters = ...`,
+`filter_directories`, or per-filter config sections. `sed` accepts only the
+bundled short names in `filters/stripAd/`.
