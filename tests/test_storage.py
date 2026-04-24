@@ -13,17 +13,18 @@ CONFIGFILE = "tests/data/storage/config.ini"
 
 
 class StorageTest(unittest.TestCase):
+    def setUp(self):
+        config.load(CONFIGFILE)
+
     def tearDown(self):
         if os.path.exists(WORKDIR):
             shutil.rmtree(WORKDIR)
             os.removedirs(os.path.split(WORKDIR)[0])
 
     def test_open_id_index_returns_none_without_database(self):
-        config.load(CONFIGFILE)
         self.assertIsNone(storage.open_id_index(create=False))
 
     def test_schema_and_id_index_crud(self):
-        config.load(CONFIGFILE)
         conn = storage.connect(create=True)
         try:
             tables = {
@@ -61,3 +62,57 @@ class StorageTest(unittest.TestCase):
 
         with self.assertRaises(sqlite3.ProgrammingError):
             index.keys()
+
+    def test_database_path_and_destroy_database(self):
+        self.assertEqual(
+            os.path.join(WORKDIR, "cache.sqlite3"),
+            storage.database_path(),
+        )
+
+        storage.connect(create=True).close()
+        self.assertTrue(os.path.exists(storage.database_path()))
+
+        storage.destroy_database()
+        self.assertFalse(os.path.exists(storage.database_path()))
+
+        storage.destroy_database()
+        self.assertFalse(os.path.exists(storage.database_path()))
+
+    def test_feed_and_entry_crud_helpers(self):
+        storage.upsert_feed("feed:one", "id:one", "<feed>one</feed>", updated_ts=100)
+        storage.upsert_feed("feed:one", "id:two", "<feed>two</feed>", updated_ts=200)
+
+        conn = storage.connect(create=False)
+        try:
+            row = conn.execute(
+                "SELECT feed_id, source_xml, updated_ts FROM feeds WHERE feed_uri = ?",
+                ("feed:one",),
+            ).fetchone()
+        finally:
+            conn.close()
+
+        self.assertEqual(("id:two", "<feed>two</feed>", 200), row)
+
+        self.assertEqual(0, storage.entries_count())
+        storage.upsert_entry("entry:b", "id:b", "feed:one", 20, "<entry>b</entry>")
+        storage.upsert_entry("entry:a", "id:a", "feed:one", 10, "<entry>a</entry>")
+        storage.upsert_entry("entry:a", "id:a2", "feed:two", 30, "<entry>a2</entry>")
+
+        self.assertEqual(2, storage.entries_count())
+        self.assertEqual(
+            [
+                ("entry:a", "id:a2", "feed:two", 30, "<entry>a2</entry>"),
+                ("entry:b", "id:b", "feed:one", 20, "<entry>b</entry>"),
+            ],
+            storage.list_entries_by_recency(),
+        )
+
+        storage.delete_entry("entry:b")
+        self.assertEqual(1, storage.entries_count())
+        self.assertEqual(
+            [("entry:a", "id:a2", "feed:two", 30, "<entry>a2</entry>")],
+            storage.list_entries_by_recency(),
+        )
+
+        storage.delete_entry("missing")
+        self.assertEqual(1, storage.entries_count())
