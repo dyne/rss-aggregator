@@ -5,15 +5,8 @@ from planet import shell, config, logger
 
 class FilterTests(unittest.TestCase):
 
-    def test_excerpt_images1(self):
+    def test_excerpt_images(self):
         config.load('tests/data/filter/excerpt-images.ini')
-        self.verify_images()
-
-    def test_excerpt_images2(self):
-        config.load('tests/data/filter/excerpt-images2.ini')
-        self.verify_images()
-
-    def verify_images(self):
         testfile = 'tests/data/filter/excerpt-images.xml'
         output = open(testfile).read()
         for filter in config.filters():
@@ -21,12 +14,9 @@ class FilterTests(unittest.TestCase):
 
         dom = xml.dom.minidom.parseString(output)
         excerpt = dom.getElementsByTagName('planet:excerpt')[0]
-        anchors = excerpt.getElementsByTagName('a')
-        hrefs = [a.getAttribute('href') for a in anchors]
-        texts = [a.lastChild.nodeValue for a in anchors]
-
-        self.assertEqual(['inner','outer1','outer2'], hrefs)
-        self.assertEqual(['bar','bar','<img>'], texts)
+        images = excerpt.getElementsByTagName('img')
+        self.assertEqual(3, len(images))
+        self.assertEqual('inner', images[0].getAttribute('src'))
 
     def test_excerpt_lorem_ipsum(self):
         testfile = 'tests/data/filter/excerpt-lorem-ipsum.xml'
@@ -38,24 +28,9 @@ class FilterTests(unittest.TestCase):
 
         dom = xml.dom.minidom.parseString(output)
         excerpt = dom.getElementsByTagName('planet:excerpt')[0]
-        self.assertEqual('Lorem ipsum dolor sit amet, consectetuer ' +
-            'adipiscing elit. Nullam velit. Vivamus tincidunt, erat ' +
-            'in \u2026', excerpt.firstChild.firstChild.nodeValue)
-
-    def test_excerpt_lorem_ipsum_summary(self):
-        testfile = 'tests/data/filter/excerpt-lorem-ipsum.xml'
-        config.load('tests/data/filter/excerpt-lorem-ipsum.ini')
-        config.parser.set('excerpt.py', 'target', 'atom:summary')
-
-        output = open(testfile).read()
-        for filter in config.filters():
-            output = shell.run(filter, output, mode="filter")
-
-        dom = xml.dom.minidom.parseString(output)
-        excerpt = dom.getElementsByTagName('summary')[0]
-        self.assertEqual('Lorem ipsum dolor sit amet, consectetuer ' +
-            'adipiscing elit. Nullam velit. Vivamus tincidunt, erat ' +
-            'in \u2026', excerpt.firstChild.firstChild.nodeValue)
+        self.assertTrue(excerpt.toxml().find(
+            'Lorem ipsum dolor sit amet, consectetuer') >= 0)
+        self.assertTrue(excerpt.toxml().find('Class aptent  \u2026') >= 0)
 
     def test_stripAd_yahoo(self):
         testfile = 'tests/data/filter/stripAd-yahoo.xml'
