@@ -133,3 +133,62 @@ class ExpungeTest(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(workdir, filename('', 'tag:example.com,2026:feed3-old'))))
         self.assertFalse(os.path.exists(os.path.join(workdir, filename('', 'tag:example.com,2026:feed4-old'))))
         self.assertFalse(os.path.exists(os.path.join(workdir, filename('', 'tag:example.com,2026:unsubbed'))))
+
+    def test_expunge_sqlite_recovers_or_preserves_unknown_source_rows(self):
+        config.load(configfile)
+
+        feed = 'tests/data/expunge/testfeed3.atom'
+        document = minidom.parse(feed)
+        feed_id = document.getElementsByTagName('id')[0].childNodes[0].nodeValue
+        shutil.copyfile(feed, filename(config.cache_sources_directory(), feed_id))
+
+        recovered_old = 'tag:example.com,2026:recover-old'
+        recovered_new = 'tag:example.com,2026:recover-new'
+        malformed = 'tag:example.com,2026:malformed'
+        no_source = 'tag:example.com,2026:no-source'
+
+        for entry_id, updated_ts, entry_xml in (
+            (
+                recovered_old,
+                100,
+                '<entry xmlns="http://www.w3.org/2005/Atom">'
+                f'<id>{recovered_old}</id>'
+                f'<source><id>{feed_id}</id></source>'
+                '</entry>',
+            ),
+            (
+                recovered_new,
+                200,
+                '<entry xmlns="http://www.w3.org/2005/Atom">'
+                f'<id>{recovered_new}</id>'
+                f'<source><id>{feed_id}</id></source>'
+                '</entry>',
+            ),
+            (malformed, 300, '<entry>'),
+            (
+                no_source,
+                250,
+                '<entry xmlns="http://www.w3.org/2005/Atom">'
+                f'<id>{no_source}</id>'
+                '</entry>',
+            ),
+        ):
+            entry_key = filename('', entry_id)
+            storage.upsert_entry(entry_key, entry_id, None, updated_ts, entry_xml)
+            with open(os.path.join(workdir, entry_key), 'w', encoding='utf-8') as handle:
+                handle.write(entry_xml)
+
+        expungeCache()
+
+        remaining = [row[0] for row in storage.list_entries_by_recency()]
+        self.assertEqual(
+            [
+                filename('', malformed),
+                filename('', no_source),
+                filename('', recovered_new),
+            ],
+            remaining,
+        )
+        self.assertFalse(os.path.exists(os.path.join(workdir, filename('', recovered_old))))
+        self.assertTrue(os.path.exists(os.path.join(workdir, filename('', malformed))))
+        self.assertTrue(os.path.exists(os.path.join(workdir, filename('', no_source))))
