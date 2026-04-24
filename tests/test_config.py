@@ -58,3 +58,10 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual('mars', config.regexp('feed2'))
         self.assertEqual('yahoo', config.sed('feed1'))
         self.assertEqual('feedburner', config.sed('feed2'))
+        self.assertEqual('stripAd/yahoo.sed', config.sed_filter('feed1'))
+        self.assertEqual('stripAd/feedburner.sed', config.sed_filter('feed2'))
+
+    def test_unknown_sed_name_is_rejected(self):
+        config.load('tests/data/config/filter-options.ini')
+        config.parser.set('feed2', 'sed', 'unknown')
+        self.assertEqual('', config.sed_filter('feed2'))
