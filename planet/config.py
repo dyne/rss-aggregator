@@ -156,13 +156,6 @@ def cache_sources_directory():
     else:
         return os.path.join(cache_directory(), 'sources')
 
-def cache_blacklist_directory():
-    if parser.has_option('Planet', 'cache_blacklist_directory'):
-        return os.path.join(cache_directory(),
-            parser.get('Planet', 'cache_blacklist_directory'))
-    else:
-        return os.path.join(cache_directory(), 'blacklist')
-
 def feed():
     if parser.has_option('Planet', 'feed'):
         return parser.get('Planet', 'feed')
