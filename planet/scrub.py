@@ -53,7 +53,7 @@ def scrub(feed_uri, data):
 
     # some people put html in author names
     if config.name_type(feed_uri).find('html')>=0:
-        from .shell.tmpl import stripHtml
+        from .shell.html import stripHtml
         if 'author_detail' in data.feed and \
             'name' in data.feed.author_detail:
             data.feed.author_detail['name'] = \
