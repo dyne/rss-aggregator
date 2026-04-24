@@ -24,9 +24,6 @@ class ConfigTest(unittest.TestCase):
     def test_link(self):
         self.assertEqual('http://example.com/', config.link())
 
-    def test_pubsubhubbub_hub(self):
-        self.assertEqual('http://pubsubhubbub.appspot.com', config.pubsubhubbub_hub())
-
     def test_items_per_page(self):
         self.assertEqual(50, config.items_per_page())
 

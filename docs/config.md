@@ -87,12 +87,6 @@ Below is the maintained set of built-in planet configuration parameters.
 > cache_keep_entries  
 > Used by `expunge` to determine how many entries should be kept for each source when expunging old entries from the cache directory. This may be overriden on a per subscription feed basis.
 >
-> pubsubhubbub_hub  
-> URL to a PubSubHubbub hub, for example <http://pubsubhubbub.appspot.com>. Used by `publish` to ping the hub when feeds are published, speeding delivery of updates to subscribers. See the [PubSubHubbub home page](http://code.google.com/p/pubsubhubbub/) for more information.
->
-> pubsubhubbub_feeds  
-> List of feeds to publish. Defaults to `rss.xml`.
->
 > Additional options can be found in [normalization level overrides](normalization.md#overrides).
 
 ### `[DEFAULT]`
