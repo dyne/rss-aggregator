@@ -6,9 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "venus"
 version = "0.1.0"
 description = "Planet feed aggregator and static site generator"
-readme = "README"
+readme = "README.md"
 requires-python = ">=3.9"
-license = { file = "LICENCE" }
+license = "AGPL-3.0-or-later"
 authors = [
   { name = "Venus contributors" }
 ]
@@ -18,5 +18,5 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["planet", "planet.shell", "planet.vendor"]
+packages = ["planet", "planet.shell"]
 py-modules = ["admin_cb", "expunge", "favicon", "publish", "spider", "splice"]
