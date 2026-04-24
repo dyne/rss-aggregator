@@ -20,7 +20,7 @@ def splice():
         entries_to_process = sqlite_entries
     else:
         entries_to_process = [
-            (None, None, None, os.stat(file).st_mtime, file, 0)
+            (None, None, None, os.stat(file).st_mtime, file)
             for file in glob.glob(cache + "/*")
             if not os.path.isdir(file) and os.path.basename(file) != "cache.sqlite3"
         ]
@@ -92,9 +92,7 @@ def splice():
     count = {}
     atomNS='http://www.w3.org/2005/Atom'
     new_feed_items = config.new_feed_items()
-    for entry_key, _entry_id, _feed_id, _updated_ts, source, blacklisted in entries_to_process:
-        if blacklisted:
-            continue
+    for entry_key, _entry_id, _feed_id, _updated_ts, source in entries_to_process:
         if index != None:
             key = entry_key
             if not key:
