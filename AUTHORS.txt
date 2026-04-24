@@ -1,0 +1,10 @@
+Updated to Python3, modern deps and new features, start 2026
+by Denis Roio <jaromil@dyne.org>
+
+This codebase builds on Venus which was developed until 2010
+by Sam Ruby <rubys@intertwingly.net>
+
+Venus was in turn built on a radical refactor of Planet 2.0
+by Scott James Remnant <scott@netsplit.com>
+   Jeff Waugh <jdub@perkypants.org>
+
