@@ -147,3 +147,96 @@ class OutputTest(unittest.TestCase):
             first_item.getElementsByTagName('pubDate')[0].firstChild.nodeValue)
         guid = first_item.getElementsByTagName('guid')[0]
         self.assertEqual('false', guid.getAttribute('isPermaLink'))
+
+    def test_rss_helper_fallbacks(self):
+        self.assertEqual(None, output._format_rss_datetime(None))
+        self.assertEqual(None, output._format_rss_datetime("not-a-date"))
+        self.assertEqual("person@example.com (Example Person)",
+            output._rss_author_text({"email": "person@example.com", "name": "Example Person"}))
+        self.assertEqual("person@example.com",
+            output._rss_author_text({"email": "person@example.com"}))
+        self.assertEqual("Example Person",
+            output._rss_author_text({"name": "Example Person"}))
+        self.assertEqual(None, output._rss_author_text({}))
+        self.assertEqual("Subtitle wins",
+            output._channel_description({"title": "Feed Title", "subtitle": "Subtitle wins"}))
+        self.assertEqual("Feed Title",
+            output._channel_description({"title": "Feed Title", "subtitle": None}))
+
+    def test_render_rss_handles_permalink_and_fallback_fields(self):
+        rss = output.render_rss({
+            "title": "Fallback Feed",
+            "subtitle": None,
+            "updated": "not-a-date",
+            "rights": None,
+            "home_page_url": "http://planet.example/",
+            "author": {"name": "Maintainer"},
+            "entries": [
+                {
+                    "title": "Summary Entry",
+                    "id": "http://example.com/permalink",
+                    "published": None,
+                    "updated": "2026-04-24T12:00:00Z",
+                    "summary": "<p>Summary only</p>",
+                    "content": None,
+                    "links": [{"rel": "alternate", "href": "http://example.com/permalink"}],
+                    "categories": ["alpha"],
+                    "author": {"name": "Author One"},
+                    "screenshot": None,
+                    "source": {"title": None, "id": None, "links": [], "screenshot": None},
+                },
+                {
+                    "title": "Content Entry",
+                    "id": "tag:example.com,2026:2",
+                    "published": "not-a-date",
+                    "updated": None,
+                    "summary": None,
+                    "content": "<p>Content only</p>",
+                    "links": [
+                        {"rel": "alternate", "href": "http://example.com/content"},
+                        {"rel": "enclosure", "href": "http://example.com/file.bin", "type": None, "length": None},
+                    ],
+                    "categories": [],
+                    "author": {"email": "author@example.com"},
+                    "screenshot": "http://example.com/thumb.png",
+                    "source": {
+                        "title": "Source Feed",
+                        "id": "source:1",
+                        "links": [{"rel": "alternate", "href": "http://example.com/source"}],
+                        "screenshot": "http://example.com/source.png",
+                    },
+                },
+            ],
+        })
+
+        document = minidom.parseString(rss)
+        channel = document.getElementsByTagName("channel")[0]
+        self.assertEqual(
+            "Fallback Feed",
+            channel.getElementsByTagName("description")[0].firstChild.nodeValue)
+        self.assertEqual(0, len(channel.getElementsByTagName("lastBuildDate")))
+        self.assertEqual(
+            "Maintainer",
+            channel.getElementsByTagName("managingEditor")[0].firstChild.nodeValue)
+
+        items = document.getElementsByTagName("item")
+        first_guid = items[0].getElementsByTagName("guid")[0]
+        self.assertEqual("true", first_guid.getAttribute("isPermaLink"))
+        self.assertEqual(
+            "<p>Summary only</p>",
+            items[0].getElementsByTagName("description")[0].firstChild.nodeValue)
+        self.assertEqual(0, len(items[0].getElementsByTagName("content:encoded")))
+
+        second_item = items[1]
+        self.assertEqual(0, len(second_item.getElementsByTagName("pubDate")))
+        self.assertEqual(
+            "<p>Content only</p>",
+            second_item.getElementsByTagName("description")[0].firstChild.nodeValue)
+        self.assertEqual(
+            "<p>Content only</p>",
+            second_item.getElementsByTagName("content:encoded")[0].firstChild.nodeValue)
+        enclosure = second_item.getElementsByTagName("enclosure")[0]
+        self.assertEqual("application/octet-stream", enclosure.getAttribute("type"))
+        self.assertEqual("0", enclosure.getAttribute("length"))
+        source = second_item.getElementsByTagName("source")[0]
+        self.assertEqual("http://example.com/source", source.getAttribute("url"))
