@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import unittest, os, sys, glob, new, re, io, time
+import unittest, os, sys, glob, re, io, time
 from planet import config
 from planet.shell import tmpl
 
@@ -56,12 +56,10 @@ class FilterTmplTest(unittest.TestCase):
 for testcase in glob.glob(testfiles % ('*','xml')):
     root = os.path.splitext(os.path.basename(testcase))[0]
     func = lambda self, name=root: self.eval_feed(name)
-    method = new.instancemethod(func, None, FilterTmplTest)
-    setattr(FilterTmplTest, "test_" + root, method)
+    setattr(FilterTmplTest, "test_" + root, func)
 
 # build a test method for each ini test file
 for testcase in glob.glob(testfiles % ('*','ini')):
     root = os.path.splitext(os.path.basename(testcase))[0]
     func = lambda self, name=root: self.eval_config(name)
-    method = new.instancemethod(func, None, FilterTmplTest)
-    setattr(FilterTmplTest, "test_" + root, method)
+    setattr(FilterTmplTest, "test_" + root, func)

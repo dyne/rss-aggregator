@@ -207,11 +207,11 @@ def load(config_files):
             elif content_type(list).find('csv')>=0:
                 csv_config.csv2config(data, cached_config)
             elif content_type(list).find('config')>=0:
-                cached_config.readfp(data)
+                cached_config.read_file(data)
             else:
                 from planet import shell
                 import io
-                cached_config.readfp(io.StringIO(shell.run(
+                cached_config.read_file(io.StringIO(shell.run(
                     content_type(list), data.getvalue(), mode="filter")))
 
             if cached_config.sections() in [[], [list]]: 
@@ -296,7 +296,7 @@ def downloadReadingList(list, orig_config, callback, use_cache=True, re_read=Tru
                 cdata = io.StringIO()
                 cached_config.write(cdata)
                 cdata.seek(0)
-                orig_config.readfp(cdata)
+                orig_config.read_file(cdata)
     except:
         try:
             if re_read:
@@ -306,7 +306,7 @@ def downloadReadingList(list, orig_config, callback, use_cache=True, re_read=Tru
                     cdata = io.StringIO()
                     cached_config.write(cdata)
                     cdata.seek(0)
-                    orig_config.readfp(cdata)
+                    orig_config.read_file(cdata)
                 logger.info("Using cached %s readinglist", list)
         except:
             logger.exception("Unable to read %s readinglist", list)

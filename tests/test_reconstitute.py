@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import unittest, os, sys, glob, new, re, io, time
+import unittest, os, sys, glob, re, io, time
 from planet import feedparser
 from planet.reconstitute import reconstitute
 from planet.scrub import scrub
@@ -41,5 +41,4 @@ class ReconstituteTest(unittest.TestCase):
 for testcase in glob.glob(testfiles % '*'):
     root = os.path.splitext(os.path.basename(testcase))[0]
     func = lambda self, name=root: self.eval(name)
-    method = new.instancemethod(func, None, ReconstituteTest)
-    setattr(ReconstituteTest, "test_" + root, method)
+    setattr(ReconstituteTest, "test_" + root, func)

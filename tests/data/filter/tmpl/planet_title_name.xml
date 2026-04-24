@@ -1,6 +1,6 @@
 <!--
 Description:  id
-Expect:       Items[0]['channel_name'] == 'Se\xc3\xb1or Frog'
+Expect:       Items[0]['channel_name'] == 'Se\u00f1or Frog'
 -->
 
 <feed xmlns="http://www.w3.org/2005/Atom">
@@ -10,4 +10,3 @@ Expect:       Items[0]['channel_name'] == 'Se\xc3\xb1or Frog'
     </source>
   </entry>
 </feed>
-

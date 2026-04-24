@@ -1,9 +1,14 @@
 from xml.sax.saxutils import escape
-import sgmllib, time, os, sys, new, urllib.parse, re
+from xml.dom import minidom
+import html.entities
+import sgmllib, time, os, sys, urllib.parse, re
 from planet import config, feedparser
 import htmltmpl
 
-voids=feedparser._BaseHTMLProcessor.elements_no_end_tag
+voids=getattr(getattr(feedparser, '_BaseHTMLProcessor', None),
+    'elements_no_end_tag',
+    ['area', 'base', 'basefont', 'br', 'col', 'frame', 'hr', 'img',
+     'input', 'isindex', 'link', 'meta', 'param'])
 empty=re.compile(r"<((%s)[^>]*)></\2>" % '|'.join(voids))
 
 class stripHtml(sgmllib.SGMLParser):
@@ -12,16 +17,11 @@ class stripHtml(sgmllib.SGMLParser):
         sgmllib.SGMLParser.__init__(self)
         self.result=''
         if isinstance(data, str):
-            try:
-                self.feed(data.decode('utf-8'))
-            except:
-                self.feed(data)
-        else:
             self.feed(data)
+        else:
+            self.feed(data.decode('utf-8'))
         self.close()
     def __str__(self):
-        if isinstance(self.result, str):
-            return self.result.encode('utf-8')
         return self.result
     def handle_entityref(self, ref):
         import html.entities
@@ -49,7 +49,6 @@ class stripHtml(sgmllib.SGMLParser):
 # Data format mappers
 
 def String(value):
-    if isinstance(value, str): return value.encode('utf-8')
     return value
 
 def Plain(value):
@@ -182,17 +181,70 @@ def _end_planet_source(self):
     context.sources.append(context.source)
     del context['source']
 
+def _source_info(node):
+    """Convert an Atom source-like DOM node into a FeedParserDict."""
+    atom = 'http://www.w3.org/2005/Atom'
+    planet_ns = 'http://planet.intertwingly.net/'
+    source_xml = '<feed xmlns="%s">%s</feed>' % (
+        atom, ''.join([child.toxml() for child in node.childNodes]))
+    source = feedparser.parse(source_xml).feed
+    for child in node.childNodes:
+        if child.nodeType != child.ELEMENT_NODE:
+            continue
+        if child.namespaceURI != planet_ns:
+            continue
+        text = ''.join(grandchild.data for grandchild in child.childNodes
+            if grandchild.nodeType == grandchild.TEXT_NODE)
+        source['planet_' + child.localName.replace('-', '_')] = text
+    return source
+
+def _planet_sources(source):
+    """Extract feed-level and entry-level planet:source data."""
+    if isinstance(source, bytes):
+        source = source.decode('utf-8')
+    source = _xml_source_for_dom(source)
+    try:
+        doc = minidom.parseString(source)
+    except Exception:
+        return [], []
+    planet_sources = [_source_info(node)
+        for node in doc.getElementsByTagNameNS(
+            'http://planet.intertwingly.net/', 'source')]
+    entry_sources = [_source_info(node)
+        for node in doc.getElementsByTagNameNS(
+            'http://www.w3.org/2005/Atom', 'source')]
+    return planet_sources, entry_sources
+
+def _xml_source_for_dom(source):
+    """Make old loose feed fixtures parseable enough for source extraction."""
+    feed_start = re.search(r'<feed\b[^>]*>', source)
+    if feed_start and 'xmlns:planet' not in feed_start.group(0):
+        source = source.replace('<feed ', "<feed xmlns:planet='%s' " %
+            'http://planet.intertwingly.net/', 1)
+    def replace_entity(match):
+        name = match.group(1)
+        if name in ('amp', 'lt', 'gt', 'apos', 'quot'):
+            return match.group(0)
+        return html.entities.html5.get(name + ';', match.group(0))
+    return re.sub(r'&([A-Za-z][A-Za-z0-9]+);', replace_entity, source)
+
 def template_info(source):
     """ get template information from a feedparser output """
 
     # wire in support for planet:source, call feedparser, unplug planet:source
-    mixin=feedparser._FeedParserMixin
-    mixin._start_planet_source = mixin._start_source
-    mixin._end_planet_source = \
-        new.instancemethod(_end_planet_source, None, mixin)
+    mixin=getattr(feedparser, '_FeedParserMixin', None)
+    if mixin:
+        mixin._start_planet_source = mixin._start_source
+        mixin._end_planet_source = _end_planet_source
+    planet_sources, entry_sources = _planet_sources(source)
     data=feedparser.parse(source)
-    del mixin._start_planet_source
-    del mixin._end_planet_source
+    if planet_sources:
+        data.feed['sources'] = planet_sources
+    for entry, source_info in zip(data.entries, entry_sources):
+        entry['source'] = source_info
+    if mixin:
+        del mixin._start_planet_source
+        del mixin._end_planet_source
 
     # apply rules to convert feed parser output to htmltmpl input
     output = {'Channels': [], 'Items': []}
@@ -201,7 +253,7 @@ def template_info(source):
     for feed in data.feed.get('sources',[]):
         source = tmpl_mapper(feed, Base)
         sources.append([source.get('name'), source])
-    sources.sort()
+    sources.sort(key=lambda item: item[0] or '')
     output['Channels'] = [source for name,source in sources]
     for entry in data.entries:
         output['Items'].append(tmpl_mapper(entry, Items))
@@ -273,4 +325,3 @@ if __name__ == '__main__':
     for test in sys.argv[1:]:
         from pprint import pprint
         pprint(template_info('/home/rubys/bzr/venus/tests/data/filter/tmpl/'+test))
-

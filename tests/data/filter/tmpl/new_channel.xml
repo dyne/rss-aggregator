@@ -1,6 +1,6 @@
 <!--
 Description:  source id
-Expect:       Items[0]['new_channel'] == 'http://example.com/' and not Items[1].has_key('new_channel') and Items[2]['new_channel'] == 'http://example.org/' and Items[3]['new_channel'] == 'http://example.com/'
+Expect:       Items[0]['new_channel'] == 'http://example.com/' and 'new_channel' not in Items[1] and Items[2]['new_channel'] == 'http://example.org/' and Items[3]['new_channel'] == 'http://example.com/'
 -->
 
 <feed xmlns="http://www.w3.org/2005/Atom">
@@ -31,4 +31,3 @@ Expect:       Items[0]['new_channel'] == 'http://example.com/' and not Items[1].
     <id>http://example.org/</id>
   </planet:source>
 </feed>
-

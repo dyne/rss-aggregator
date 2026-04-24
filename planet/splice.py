@@ -1,7 +1,9 @@
 """ Splice together a planet from a cache of feed entries """
 import glob, os, time, shutil
 from xml.dom import minidom
-import planet, config, feedparser, reconstitute, shell
+import planet
+from . import config, reconstitute, shell
+from planet import feedparser
 from .reconstitute import createTextElement, date
 from .spider import filename
 from planet import idindex

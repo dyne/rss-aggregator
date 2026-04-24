@@ -3,7 +3,7 @@ Process a set of configuration defined sanitations on a given feed.
 """
 
 # Standard library modules
-import time
+import time, urllib.parse
 # Planet modules
 import planet
 from . import config, shell
@@ -86,7 +86,7 @@ def scrub(feed_uri, data):
             del entry['updated_parsed']
             del entry['updated']
     elif future_dates == 'ignore_entry':
-      now = time.time()
+      now = time.gmtime()
       if 'updated_parsed' in data.feed and data.feed['updated_parsed']:
         if data.feed['updated_parsed'] > now: del data.feed['updated_parsed']
       data.entries = [entry for entry in data.entries if 
@@ -123,11 +123,12 @@ def scrub(feed_uri, data):
                         if 'link' in entry:
                             node['base'] = entry.link
                     else:
-                        node['base'] = feedparser._urljoin(
+                        node['base'] = urllib.parse.urljoin(
                             node['base'], scrub_xmlbase)
 
-                node['value'] = feedparser._resolveRelativeURIs(
-                    node.value, node.base, 'utf-8', node.type)
+                if hasattr(feedparser, '_resolveRelativeURIs'):
+                    node['value'] = feedparser._resolveRelativeURIs(
+                        node.value, node.base, 'utf-8', node.type)
 
             # Run this through HTML5's sanitizer
             doc = None
@@ -141,12 +142,16 @@ def scrub(feed_uri, data):
             if not doc:
               from html5lib import html5parser, treebuilders
               p=html5parser.HTMLParser(tree=treebuilders.getTreeBuilder('dom'))
-              doc = p.parseFragment(node['value'], encoding='utf-8')
+              doc = p.parseFragment(node['value'])
 
             from html5lib import treewalkers, serializer
             from html5lib.filters import sanitizer
             walker = sanitizer.Filter(treewalkers.getTreeWalker('dom')(doc))
-            xhtml = serializer.XHTMLSerializer(inject_meta_charset = False)
-            tree = xhtml.serialize(walker, encoding='utf-8')
+            xhtml = serializer.HTMLSerializer(
+                inject_meta_charset=False,
+                omit_optional_tags=False,
+                quote_attr_values='always',
+                use_trailing_solidus=True)
+            tree = xhtml.serialize(walker)
 
             node['value'] = ''.join([str(token) for token in tree])

@@ -31,11 +31,13 @@ illegal_xml_chars = re.compile("[\x01-\x08\x0B\x0C\x0E-\x1F]", re.UNICODE)
 def createTextElement(parent, name, value):
     """ utility function to create a child element with the specified text"""
     if not value: return
-    if isinstance(value,str):
+    if isinstance(value, bytes):
         try:
             value=value.decode('utf-8')
-        except:
+        except UnicodeDecodeError:
             value=value.decode('iso-8859-1')
+    else:
+        value = str(value)
     value = illegal_xml_chars.sub(invalidate, value)
     xdoc = parent.ownerDocument
     xelement = xdoc.createElement(name)
@@ -60,11 +62,16 @@ def ncr2c(value):
 nonalpha=re.compile('\W+',re.UNICODE)
 def cssid(name):
     """ generate a css id from a name """
-    try:
-        name = nonalpha.sub('-',name.decode('utf-8')).lower().encode('utf-8')
-    except:
-        name = nonalpha.sub('-',name).lower()
+    if isinstance(name, bytes):
+        name = name.decode('utf-8')
+    name = nonalpha.sub('-', name).lower()
     return name.strip('-')
+
+def md5_text(value):
+    """Return an MD5 digest for text or bytes input."""
+    if isinstance(value, str):
+        value = value.encode('utf-8')
+    return md5(value)
 
 def id(xentry, entry):
     """ copy or compute an id for the entry """
@@ -74,19 +81,25 @@ def id(xentry, entry):
         if hasattr(entry_id, 'values'): entry_id = entry_id.values()[0]
     elif "link" in entry and entry.link:
         entry_id = entry.link
+    elif "links" in entry and [
+        link for link in entry.links
+        if link.get('rel') == 'enclosure' and link.get('href')]:
+        enclosures = [link for link in entry.links
+            if link.get('rel') == 'enclosure' and link.get('href')]
+        entry_id = enclosures[0].href
     elif "title" in entry and entry.title:
         entry_id = (entry.title_detail.base + "/" +
-            md5(entry.title).hexdigest())
-    elif "summary" in entry and entry.summary:
+            md5_text(entry.title).hexdigest())
+    elif "summary_detail" in entry and entry.summary:
       if "summary_detail" in entry and entry.summary_detail:
         entry_id = entry.summary_detail.base
       else:
         entry_id = ''
-      entry_id += ("/" + md5(entry.summary).hexdigest())
+      entry_id += ("/" + md5_text(entry.summary).hexdigest())
     elif "content" in entry and entry.content:
 
         entry_id = (entry.content[0].base + "/" +
-            md5(entry.content[0].value).hexdigest())
+            md5_text(entry.content[0].value).hexdigest())
     else:
         return
 
@@ -120,7 +133,7 @@ def date(xentry, name, parsed):
     formatted = time.strftime("%Y-%m-%dT%H:%M:%SZ", parsed)
     xdate = createTextElement(xentry, name, formatted)
     formatted = time.strftime(config.date_format(), parsed)
-    xdate.setAttribute('planet:format', formatted.decode('utf-8'))
+    xdate.setAttribute('planet:format', formatted)
 
 def category(xentry, tag):
     xtag = xentry.ownerDocument.createElement('category')
@@ -157,8 +170,8 @@ def content(xentry, name, detail, bozo):
     xdoc = xentry.ownerDocument
     xcontent = xdoc.createElement(name)
 
-    if isinstance(detail.value,str):
-        detail.value=detail.value.encode('utf-8')
+    if isinstance(detail.value, bytes):
+        detail.value=detail.value.decode('utf-8')
 
     if 'type' not in detail or detail.type.lower().find('html')<0:
         detail['value'] = escape(detail.value)
@@ -173,7 +186,7 @@ def content(xentry, name, detail, bozo):
 
     if detail.type.find('xhtml')<0 or bozo:
         parser = html5parser.HTMLParser(tree=treebuilders.getTreeBuilder("dom"))
-        html = parser.parse(xdiv % detail.value, encoding="utf-8")
+        html = parser.parse(xdiv % detail.value)
         for body in html.documentElement.childNodes:
             if body.nodeType != Node.ELEMENT_NODE: continue
             if body.nodeName != 'body': continue
@@ -197,7 +210,7 @@ def content(xentry, name, detail, bozo):
                     # that normalize() must be in an infinite loop; mark
                     # the content as escaped html and proceed on...
                     xcontent.setAttribute('type', 'html')
-                    data = xdoc.createTextNode(detail.value.decode('utf-8'))
+                    data = xdoc.createTextNode(detail.value)
 
     if data: xcontent.appendChild(data)
 
@@ -209,6 +222,8 @@ def content(xentry, name, detail, bozo):
 def location(xentry, long, lat):
     """ insert geo location into the entry """
     if not lat or not long: return
+    long = float(long)
+    lat = float(lat)
 
     xlat = createTextElement(xentry, '%s:%s' % ('geo','lat'), '%f' % lat)
     xlat.setAttribute('xmlns:%s' % 'geo', 'http://www.w3.org/2003/01/geo/wgs84_pos#')
@@ -217,6 +232,15 @@ def location(xentry, long, lat):
 
     xentry.appendChild(xlat)
     xentry.appendChild(xlong)
+
+def first_coordinate_pair(coordinates):
+    """Return the first coordinate pair from nested GeoRSS shapes."""
+    while coordinates and isinstance(coordinates[0], (list, tuple)) and \
+        coordinates[0] and isinstance(coordinates[0][0], (list, tuple)):
+        coordinates = coordinates[0]
+    if coordinates and isinstance(coordinates[0], (list, tuple)):
+        return coordinates[0][0], coordinates[0][1]
+    return coordinates[0], coordinates[1]
 
 def source(xsource, source, bozo, format):
     """ copy source information to the entry """
@@ -309,8 +333,15 @@ def reconstitute(feed, entry):
         coordinates = where.get('coordinates',None)
         if type == 'Point':
             location(xentry, coordinates[0], coordinates[1])
-        elif type == 'Box' or type == 'LineString' or type == 'Polygon':
-            location(xentry, coordinates[0][0], coordinates[0][1])
+        elif type == 'Box':
+            if coordinates and len(coordinates) >= 2:
+                long = (coordinates[0][0] + coordinates[1][0]) / 2
+                lat = (coordinates[0][1] + coordinates[1][1]) / 2
+                location(xentry, long, lat)
+        elif type == 'LineString' or type == 'Polygon':
+            if coordinates:
+                long, lat = first_coordinate_pair(coordinates)
+                location(xentry, long, lat)
     if 'geo_lat' in entry and \
         'geo_long' in entry:
         location(xentry, (float)(entry.get('geo_long',None)), (float)(entry.get('geo_lat',None)))
@@ -368,7 +399,8 @@ def reconstitute(feed, entry):
 def entry_updated(feed, entry, default = None):
     chks = ((entry, 'updated_parsed'),
             (entry, 'published_parsed'),
-            (feed,  'updated_parsed'),)
+            (feed,  'updated_parsed'),
+            (feed,  'published_parsed'),)
     for node, field in chks:
         if field in node and node[field]:
             return node[field]

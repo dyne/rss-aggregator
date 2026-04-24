@@ -47,7 +47,7 @@ class ScrubTest(unittest.TestCase):
         self.assertTrue('updated_parsed' in base.entries[0])
         self.assertTrue('language' in base.entries[0].summary_detail)
 
-        config.parser.readfp(io.StringIO(configData))
+        config.parser.read_file(io.StringIO(configData))
         config.parser.set('testfeed', 'ignore_in_feed',
           'author id updated xml:lang')
         data = deepcopy(base)
@@ -65,13 +65,13 @@ class ScrubTest(unittest.TestCase):
 
         self.assertEqual('F&ouml;o', base.feed.author_detail.name)
 
-        config.parser.readfp(io.StringIO(configData))
+        config.parser.read_file(io.StringIO(configData))
         data = deepcopy(base)
         scrub('testfeed', data)
 
-        self.assertEqual('F\xc3\xb6o', data.feed.author_detail.name)
-        self.assertEqual('F\xc3\xb6o', data.entries[0].author_detail.name)
-        self.assertEqual('F\xc3\xb6o', data.entries[0].source.author_detail.name)
+        self.assertEqual('F\u00f6o', data.feed.author_detail.name)
+        self.assertEqual('F\u00f6o', data.entries[0].author_detail.name)
+        self.assertEqual('F\u00f6o', data.entries[0].source.author_detail.name)
 
         self.assertEqual('text/html', data.entries[0].title_detail.type)
         self.assertEqual('text/html', data.entries[0].summary_detail.type)
@@ -82,7 +82,7 @@ class ScrubTest(unittest.TestCase):
         self.assertEqual(1, len(base.entries))
         self.assertTrue('updated' in base.entries[0])
 
-        config.parser.readfp(io.StringIO(configData))
+        config.parser.read_file(io.StringIO(configData))
         config.parser.set('testfeed', 'future_dates', 'ignore_date')
         data = deepcopy(base)
         scrub('testfeed', data)
@@ -98,7 +98,7 @@ class ScrubTest(unittest.TestCase):
         self.assertEqual('http://example.com/',
              base.entries[0].title_detail.base)
 
-        config.parser.readfp(io.StringIO(configData))
+        config.parser.read_file(io.StringIO(configData))
         config.parser.set('testfeed', 'xml_base', 'feed_alternate')
         data = deepcopy(base)
         scrub('testfeed', data)
