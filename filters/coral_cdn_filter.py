@@ -15,4 +15,4 @@ for node in entry.getElementsByTagName('img'):
             component[1] += '.nyud.net:8080'
             node.setAttribute('src', urllib.parse.urlunparse(component))
 
-print(entry.toxml('utf-8'))
+print(entry.toxml('utf-8').decode('utf-8'))

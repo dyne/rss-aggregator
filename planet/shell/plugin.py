@@ -1,8 +1,8 @@
-import os, sys, imp
+import os, sys
 from io import StringIO
 
 def run(script, doc, output_file=None, options={}):
-    """ process an Python script using imp """
+    """Process a Python plugin script in the current interpreter."""
     save_sys = (sys.stdin, sys.stdout, sys.stderr, sys.argv)
     plugin_stdout = StringIO()
     plugin_stderr = StringIO()
@@ -31,14 +31,18 @@ def run(script, doc, output_file=None, options={}):
         options = sum([['--'+key, value] for key,value in options.items()], [])
         sys.argv = [plugin_file] + options
 
-        # import script
-        handle = open(script, 'r')
         cwd = os.getcwd()
         try:
             try:
+                namespace = {
+                    '__name__': '__main__',
+                    '__file__': plugin_file,
+                    '__builtins__': __builtins__,
+                }
                 try:
-                    description=('.plugin', 'rb', imp.PY_SOURCE)
-                    imp.load_module('__main__',handle,plugin_file,description)
+                    with open(script, 'r') as handle:
+                        code = compile(handle.read(), plugin_file, 'exec')
+                    exec(code, namespace)
                 except SystemExit as e:
                     if e.code: log.error('%s exit rc=%d',(plugin_file,e.code))
             except Exception as e:
@@ -48,7 +52,6 @@ def run(script, doc, output_file=None, options={}):
                    traceback.format_exception_only(type,value) +
                    traceback.format_tb(tb)))
         finally:
-            handle.close()
             if cwd != os.getcwd(): os.chdir(cwd)
 
     finally:

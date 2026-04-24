@@ -126,8 +126,7 @@ except ImportError:
             exitcode = -1
     except:
         import subprocess
-        (exitstatus,output) = subprocess.getstatusoutput('xsltproc -V')
-        exitcode = ((exitstatus>>8) & 0xFF)
+        exitcode, output = subprocess.getstatusoutput('xsltproc -V')
 
     if exitcode:
         logger.warn("xsltproc is not available => can't test XSLT templates")

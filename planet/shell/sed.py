@@ -9,7 +9,7 @@ def run(script, doc, output_file=None, options={}):
         out = PIPE
 
     proc = Popen(['sed', '-f', script],
-        stdin=PIPE, stdout=out, stderr=PIPE)
+        stdin=PIPE, stdout=out, stderr=PIPE, text=True)
 
     stdout, stderr = proc.communicate(doc)
     if stderr:

@@ -115,7 +115,7 @@ def __init__():
     define_planet_list('template_files')
     define_planet_list('bill_of_materials')
     define_planet_list('template_directories', '.')
-    define_planet_list('filter_directories')
+    define_planet_list('filter_directories', 'filters')
     define_planet('django_autoescape', 'on')
 
     # template options
@@ -390,6 +390,8 @@ def filters(section=None):
 
 def planet_options():
     """ dictionary of planet wide options"""
+    if not parser.has_section('Planet'):
+        return {}
     return dict(map(lambda opt: (opt,
         parser.get('Planet', opt, raw=(opt=="log_format"))),
         parser.options('Planet')))

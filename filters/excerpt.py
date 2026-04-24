@@ -106,4 +106,4 @@ if source:
         source[0].parentNode.removeChild(source[0])
 
 # print out results
-print(dom.toxml('utf-8'))
+print(dom.toxml('utf-8').decode('utf-8'))

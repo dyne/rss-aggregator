@@ -1,9 +1,8 @@
 import os
+import tempfile
 
 def quote(string, apos):
     """ quote a string so that it can be passed as a parameter """
-    if type(string) == str:
-        string=string.encode('utf-8')
     if apos.startswith("\\"): string.replace('\\','\\\\')
 
     if string.find("'")<0:
@@ -45,10 +44,13 @@ def run(script, doc, output_file=None, options={}):
         import warnings
         if hasattr(warnings, 'simplefilter'):
             warnings.simplefilter('ignore', RuntimeWarning)
-        docfile = os.tmpnam()
-        file = open(docfile,'w')
-        file.write(doc)
-        file.close()
+        handle = tempfile.NamedTemporaryFile(
+            mode='w', encoding='utf-8', delete=False)
+        try:
+            handle.write(doc)
+            docfile = handle.name
+        finally:
+            handle.close()
 
         cmdopts = []
         for key,value in options.items():
@@ -66,7 +68,7 @@ def run(script, doc, output_file=None, options={}):
             for key,value in options.items()], [])
 
         proc = Popen(['xsltproc'] + options + [script, '-'],
-            stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
 
         result, stderr = proc.communicate(doc)
         if stderr:

@@ -34,6 +34,7 @@ __author__ = "Tomas Styblo (tripie@cpan.org)"
 # All imported modules are part of the standard Python library.
 
 from types import *
+import html
 import re
 import os
 import os.path
@@ -41,10 +42,16 @@ import pprint       # only for debugging
 import sys
 import copy
 import cgi          # for HTML escaping of variables
-import urllib       # for URL escaping of variables
+import urllib.parse # for URL escaping of variables
 import pickle      # for template compilation
 import gettext
 import portalocker  # for locking
+
+StringType = str
+IntType = int
+LongType = int
+FloatType = float
+ListType = list
 
 INCLUDE_DIR = "inc"
 
@@ -848,9 +855,9 @@ class TemplateProcessor:
         ESCAPE_QUOTES = 1
         if (self._html_escape and override != "NONE" and override != "0" and \
             override != "URL") or override == "HTML" or override == "1":
-            return cgi.escape(str, ESCAPE_QUOTES)
+            return html.escape(str, ESCAPE_QUOTES)
         elif override == "URL":
-            return urllib.quote_plus(str)
+            return urllib.parse.quote_plus(str)
         else:
             return str
 
@@ -1421,4 +1428,3 @@ class PrecompiledError(Exception):
             @hidden
         """
         Exception.__init__(self, template)
-

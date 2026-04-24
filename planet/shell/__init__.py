@@ -17,9 +17,9 @@ def run(template_file, doc, mode='template'):
     if template_file.find('?') < 0:
         extra_options = {}
     else:
-        import cgi
+        import urllib.parse
         template_file, extra_options = template_file.split('?',1)
-        extra_options = dict(cgi.parse_qsl(extra_options))
+        extra_options = dict(urllib.parse.parse_qsl(extra_options))
 
     # see if the template can be located
     for template_dir in dirs:

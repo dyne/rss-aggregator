@@ -15,6 +15,8 @@ for name,value in zip(sys.argv[1::2],sys.argv[2::2]):
   name = name.lstrip('-')
   try:    opts[name] = eval(value)
   except: opts[name] = value
+if opts.get('quote_attr_values') is True:
+  opts['quote_attr_values'] = 'legacy'
 
 try:
   from xml.dom import minidom
@@ -27,5 +29,5 @@ except:
 from html5lib import treewalkers, serializer
 tokens = treewalkers.getTreeWalker('dom')(doc)
 serializer = serializer.HTMLSerializer(**dict(opts))
-for text in serializer.serialize(tokens, encoding='utf-8'):
+for text in serializer.serialize(tokens):
     sys.stdout.write(text)

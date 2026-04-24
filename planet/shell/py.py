@@ -12,7 +12,7 @@ def run(script, doc, output_file=None, options={}):
     options = sum([['--'+key, value] for key,value in options.items()], [])
 
     proc = Popen([sys.executable, script] + options,
-        stdin=PIPE, stdout=out, stderr=PIPE)
+        stdin=PIPE, stdout=out, stderr=PIPE, text=True)
 
     stdout, stderr = proc.communicate(doc)
     if stderr:
