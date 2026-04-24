@@ -15,9 +15,9 @@
 
 <p>The administration interface allows you to manage the everyday tasks related to your venus installation.</p>
 
-<ul><li><strong>Running planet</strong>. By clicking the "Run planet" button, you can do a full run of the planet script, rechecking all the feeds and recreating the generated files. This corresponds to running <code>python planet.py config.ini</code> with no arguments. Note that, depending on the numer of feeds, this operation may take some time.</li> 
-<li><strong>Refreshing planet</strong>. By clicking the "Refresh planet" button, you can do an "offline" run of the planet script, without rechecking all the feeds but still recreating the generated files. This corresponds to running <code>python planet.py -o config.ini</code>.</li>
-<li><strong>Expunging the planet cache</strong>. By clicking the "Expunge cache" button, you can clean the cache from outdated entries. This corresponds to running <code>python planet.py -x config.ini</code>.</li>
+<ul><li><strong>Running planet</strong>. By clicking the "Run planet" button, you can do a full run of the planet script, rechecking all the feeds and recreating the generated files. This corresponds to running <code>python3 planet.py config.ini</code> with no arguments. Note that, depending on the numer of feeds, this operation may take some time.</li> 
+<li><strong>Refreshing planet</strong>. By clicking the "Refresh planet" button, you can do an "offline" run of the planet script, without rechecking all the feeds but still recreating the generated files. This corresponds to running <code>python3 planet.py -o config.ini</code>.</li>
+<li><strong>Expunging the planet cache</strong>. By clicking the "Expunge cache" button, you can clean the cache from outdated entries. This corresponds to running <code>python3 planet.py -x config.ini</code>.</li>
 <li><strong>Blacklisting</strong>. By selecting one or more of the entries in the list of entries, and clicking the "Blacklist" button, you can stop these items from displaying on the planet. This is very useful for quickly blocking inappropriate or malformed content from your planet. <i>Note that blacklisting does not take effect until you refresh or rerun the planet</i>. (Blacklisting can also be done manually on the server by moving files from the cache directory to the blacklist directory.)</li>
 </ul>
 

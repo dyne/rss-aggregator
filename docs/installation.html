@@ -9,24 +9,22 @@
 </head>
 <body>
 <h2>Installation</h2>
-<p>Venus has been tested on Linux, and Mac OSX, and Windows.</p>
+<p>Venus has been tested on Linux, macOS, and Windows.</p>
 
-<p>You'll need at least Python 2.2 installed on your system, we recommend
-Python 2.4 though as there may be bugs with the earlier libraries.</p>
+<p>You'll need Python 3.9 or newer installed on your system.</p>
 
-<p>Everything Pythonesque Planet needs to provide basic operation should be
-included in the distribution.  Some optional features may require
-additional libraries, for example:</p>
+<p>Install the basic Python dependencies from the checkout:</p>
+<blockquote><pre>python3 -m pip install -e .</pre></blockquote>
+
+<p>Some optional features require additional libraries or system tools:</p>
 <ul>
 <li>Usage of XSLT requires either
 <a href="http://xmlsoft.org/XSLT/xsltproc2.html">xsltproc</a>
 or <a href="http://xmlsoft.org/XSLT/python.html">python-libxslt</a>.</li>
-<li>The current interface to filters written in non-templating languages
-(e.g., python) uses the
-<a href="http://docs.python.org/lib/module-subprocess.html">subprocess</a>
-module which was introduced in Python 2.4.</li>
 <li>Usage of FOAF as a reading list requires
 <a href="http://librdf.org/">librdf</a>.</li>
+<li>Django and Genshi template filters require their corresponding Python
+packages.</li>
 </ul>
 
 <h3>General Instructions</h3>
@@ -44,7 +42,7 @@ and <code>~/venus</code> are good
 choices, but so's anywhere else you prefer.</p></li>
 <li><p>This is very important: from within that directory, type the following
 command:</p>
-<blockquote><code>python runtests.py</code></blockquote>
+<blockquote><code>python3 runtests.py</code></blockquote>
 <p>This should take anywhere from a one to ten seconds to execute.  No network
 connection is required, and the script cleans up after itself.  If the
 script completes with an "OK", you are good to go.  Otherwise stopping here
@@ -60,7 +58,7 @@ it's pretty well documented so you shouldn't have any problems here.  Pay
 particular attention to the <code>output_dir</code> option, which should be
 readable by your web server.  If the directory you specify in your
 <code>cache_dir</code> exists; make sure that it is empty.</p></li>
-<li><p>Run it: <code>python planet.py pathto/config.ini</code></p>
+<li><p>Run it: <code>python3 planet.py pathto/config.ini</code></p>
 <p>You'll want to add this to cron, make sure you run it from the
 right directory.</p></li>
 <li><p>(Optional)</p>
@@ -68,62 +66,6 @@ right directory.</p></li>
 <li><p>(Optional)</p>
 <p>Build your own themes, templates, or filters!  And share!</p></li>
 </ol>
-
-<h3 id="macosx">Mac OS X and Fink Instructions</h3>
-
-<p>
-The <a href="http://fink.sourceforge.net/">Fink Project</a> packages
-various open source software for MacOS.  This makes it a little easier
-to get started with projects like Planet Venus.
-</p>
-
-<p>
-Note: in the following, we recommend explicitly
-using <code>python2.4</code>.  As of this writing, Fink is starting to
-support <code>python2.5</code> but the XML libraries, for example, are
-not yet ported to the newer python so Venus will be less featureful.
-</p>
-
-<ol>
- <li><p>Install the XCode development tools from your Mac OS X install
-        disks</p></li>
- <li><p><a href="http://fink.sourceforge.net/download/">Download</a>
-        and install Fink</p></li>
- <li><p>Tell fink to install the Planet Venus prerequisites:<br />
-        <code>fink install python24 celementtree-py24 bzr-py24 libxslt-py24
-        libxml2-py24</code></p></li>
- <li><p><a href="../index.html">Download</a> and extract the Venus files into a
-        folder somewhere</p></li>
- <li><p>Run the tests: <code>python2.4 runtests.py</code><br /> This
-        will warn you that the RDF library is missing, but that's
-        OK.</p></li>
- <li><p>Continue with the general steps above, starting with Step 3.  You
-        may want to explicitly specify <code>python2.4</code>.</p></li>
-</ol>
-
-<h3 id="ubuntu">Ubuntu Linux (Edgy Eft) instructions</h3>
-
-<p>Before starting, issue the following command:</p>
-
-<blockquote><pre>sudo apt-get install bzr python2.4-librdf</pre></blockquote>
-
-<h3 id="windows">Windows instructions</h3>
-
-<p>
-  htmltmpl templates (and Django too, since it currently piggybacks on
-  the htmltmpl implementation) on Windows require
-  the <a href="http://sourceforge.net/projects/pywin32/">pywin32</a>
-  module.
-</p>
-
-<h3 id="python22">Python 2.2 instructions</h3>
-
-<p>If you are running Python 2.2, you may also need to install <a href="http://pyxml.sourceforge.net/">pyxml</a>.  If the
-following runs without error, you do <b>not</b> have the problem.</p>
-<blockquote><pre>python -c "__import__('xml.dom.minidom').dom.minidom.parseString('&lt;entry xml:lang=\"en\"/&gt;')"</pre></blockquote>
-<p>Installation of pyxml varies by platform.  For Ubuntu Linux (Dapper Drake), issue the following command:</p>
-
-<blockquote><pre>sudo apt-get install python2.2-xml</pre></blockquote>
 
 </body>
 </html>
