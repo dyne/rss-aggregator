@@ -9,7 +9,8 @@ Input to a filter is an aggressively [normalized](normalization.md) entry. For e
 The maintained filtering contract has three options:
 
 `excerpt = true`  
-Adds a built-in `planet:excerpt` element to each kept entry. See [opml-top100.ini](../examples/opml-top100.ini) for a minimal planet-wide example.
+Adds a built-in `planet:excerpt` element to each kept entry. See
+[minimal.ini](../examples/minimal.ini) for a minimal planet-wide example.
 
 `regexp = ...`  
 Keeps only entries whose normalized text matches the given regular expression. This is backed by the maintained [regexp helper](../filters/regexp_sifter.py), but the config surface is the built-in `regexp` option rather than `filters=...`.

@@ -2,7 +2,9 @@
 
 Configuration files are in [ConfigParser](https://docs.python.org/3/library/configparser.html) format which basically means the same format as INI files, i.e., they consist of a series of `[sections]`, in square brackets, with each section containing a list of `name:value` pairs (or `name=value` pairs, if you prefer).
 
-You are welcome to place your entire configuration into one file. Alternately, you may factor the list of subscriptions into one or more reading lists.
+You are welcome to place your entire configuration into one file. The
+maintained runtime reads only the local INI files you pass to `planet.py`;
+it does not fetch or expand OPML, CSV, or remote subscription lists.
 
 ### `[planet]`
 
@@ -95,11 +97,10 @@ Values placed in this section are used as default values for all sections. While
 
 ### `[`*subscription*`]`
 
-All sections other than `planet` or `DEFAULT` are treated as subscriptions and typically take the form of a URI.
+All sections other than `planet` or `DEFAULT` are treated as subscriptions and
+typically take the form of a URI.
 
 The most common options here are `name`, content and normalization overrides, and the built-in filtering options `excerpt`, `regexp`, and `sed`.
-
-The `content_type` parameter can be defined to indicate that this subscription is a *reading list*, i.e., is an external list of subscriptions. At the moment, the supported reading list formats are `opml`, `csv`, and `config`. In the future, support for formats like `xoxo` could be added.
 
 [Normalization overrides](normalization.md#overrides) can also be defined here.
 
