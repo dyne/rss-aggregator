@@ -137,10 +137,14 @@ def load(config_files):
     parser = ConfigParser(interpolation=None)
     parser.read(config_files)
 
+    from . import config as config_module
     import planet
     log = planet.logger
     if not log:
-        log = planet.getLogger(config.log_level(),config.log_format())
+        log = planet.getLogger(
+            config_module.log_level(),
+            config_module.log_format(),
+        )
 
 def http_cache_directory():
     if parser.has_option('Planet', 'http_cache_directory'):

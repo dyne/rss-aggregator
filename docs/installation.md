@@ -23,7 +23,7 @@ These instructions apply to any platform. Check the instructions below for more 
 
 2.  This is very important: from within that directory, type the following command:
 
-    > `uv run python runtests.py`
+    > `uv run pytest`
 
     This should take anywhere from a one to ten seconds to execute. No network connection is required, and the script cleans up after itself. If the script completes with an "OK", you are good to go. Otherwise stopping here and inquiring on the [mailing list](http://lists.planetplanet.org/mailman/listinfo/devel) is a good idea as it can save you lots of frustration down the road.
 

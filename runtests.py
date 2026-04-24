@@ -1,48 +1,31 @@
 #!/usr/bin/env python
-import glob, unittest, os, sys
+"""Compatibility wrapper that forwards the legacy test entrypoint to pytest."""
 
-# python 2.2 accommodations
-try:
-    from trace import fullmodname
-except ImportError:
-    def fullmodname(path):
-        return os.path.splitext(path)[0].replace(os.sep, '.')
+import os
+import sys
 
-# more python 2.2 accomodations
-if not hasattr(unittest.TestCase, 'assertTrue'):
-    unittest.TestCase.assertTrue = unittest.TestCase.assert_
-if not hasattr(unittest.TestCase, 'assertFalse'):
-    unittest.TestCase.assertFalse = unittest.TestCase.failIf
+import pytest
 
-# try to start in a consistent, predictable location
-if sys.path[0]: os.chdir(sys.path[0])
-sys.path[0] = os.getcwd()
 
-# determine verbosity
-verbosity = 1
-for arg,value in (('-q',0),('--quiet',0),('-v',2),('--verbose',2)):
-    if arg in sys.argv: 
-        verbosity = value
-        sys.argv.remove(arg)
+def _normalize_args(args):
+    """Translate the historical runtests.py arguments into pytest paths."""
+    if not args:
+        return ["tests"]
 
-# find all of the planet test modules
-modules = []
-for pattern in sys.argv[1:] or ['test_*.py']:
-    modules += list(map(fullmodname, glob.glob(os.path.join('tests', pattern))))
+    normalized = []
+    for arg in args:
+        if arg.startswith("-"):
+            normalized.append(arg)
+            continue
+        if os.path.exists(arg):
+            normalized.append(arg)
+            continue
+        if arg.endswith(".py"):
+            normalized.append(os.path.join("tests", arg))
+            continue
+        normalized.append(arg)
+    return normalized
 
-# enable logging
-import planet
-if verbosity == 0: planet.getLogger("FATAL",None)
-if verbosity == 1: planet.getLogger("WARNING",None)
-if verbosity == 2: planet.getLogger("DEBUG",None)
 
-# load all of the tests into a suite
-try:
-    suite = unittest.TestLoader().loadTestsFromNames(modules)
-except Exception:
-    # attempt to produce a more specific message
-    for module in modules: __import__(module)
-    raise
-
-# run test suite
-unittest.TextTestRunner(verbosity=verbosity).run(suite)
+if __name__ == "__main__":
+    raise SystemExit(pytest.main(_normalize_args(sys.argv[1:])))

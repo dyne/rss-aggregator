@@ -10,9 +10,17 @@ For best results, include both documentation and tests in your contribution.
 
 Documentation can be found in the `docs` directory. It is written in Markdown.
 
-Test cases can be found in the [tests](http://intertwingly.net/code/venus/tests/) directory, and make use of the [Python unittest framework](https://docs.python.org/3/library/unittest.html). To run them, simply enter:
+Test cases can be found in the [tests](http://intertwingly.net/code/venus/tests/) directory. The maintained runner is [pytest](https://docs.pytest.org/), while most existing test modules still use unittest-style classes under pytest collection. To run them, simply enter:
 
->     uv run python runtests.py
+>     uv run pytest
+
+To run one module:
+
+>     uv run pytest tests/test_storage.py
+
+To generate a local coverage report:
+
+>     uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml
 
 Install development dependencies from the lock file before testing:
 
