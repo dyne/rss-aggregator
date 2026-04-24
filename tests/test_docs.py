@@ -1,31 +1,46 @@
 #!/usr/bin/env python
 
-import unittest, os, re
-from xml.dom import minidom
+import os
+import re
+import unittest
 from glob import glob
-from html.entities import name2codepoint as n2cp
+
+DOC_LINK = re.compile(r'\[[^\]]+\]\(([^)]+)\)')
+
 
 class DocsTest(unittest.TestCase):
 
-    def test_well_formed(self):
-        def substitute_entity(match):
-            ent = match.group(1)
-            try:
-                  return "&#%d;" % n2cp[ent]
-            except:
-                  return "&%s;" % ent
+    def test_docs_are_markdown(self):
+        docs = sorted(os.path.basename(doc) for doc in glob('docs/*.md'))
+        self.assertEqual([
+            'admin.md',
+            'config.md',
+            'contributing.md',
+            'etiquette.md',
+            'filters.md',
+            'index.md',
+            'installation.md',
+            'migration.md',
+            'normalization.md',
+            'output.md',
+        ], docs)
+        self.assertEqual([], glob('docs/*.html'))
 
-        for doc in glob('docs/*'):
-            if os.path.isdir(doc): continue
-            if doc.endswith('.css') or doc.endswith('.js'): continue
+    def test_local_markdown_links_resolve(self):
+        for doc in glob('docs/*.md'):
+            source = open(doc, encoding='utf-8').read()
+            for target in DOC_LINK.findall(source):
+                if target.startswith(('http://', 'https://', 'mailto:')):
+                    continue
 
-            source = open(doc).read()
-            source = re.sub('&(\w+);', substitute_entity, source)
+                path = target.split('#', 1)[0]
+                if not path:
+                    continue
 
-            try:
-                minidom.parseString(source)
-            except:
-                self.fail('Not well formed: ' + doc);
-                break
-        else:
-            self.assertTrue(True);
+                self.assertFalse(path.endswith('.html'),
+                    'Unexpected html link in %s: %s' % (doc, target))
+
+                resolved = os.path.normpath(
+                    os.path.join(os.path.dirname(doc), path))
+                self.assertTrue(os.path.exists(resolved),
+                    'Broken local link in %s: %s' % (doc, target))

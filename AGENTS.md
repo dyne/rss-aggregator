@@ -8,7 +8,7 @@ implementation lives in `planet/`, with a minimal helper module in
 `planet/shell/` used only by the maintained built-in filter paths. Built-in
 output generation lives in `planet/output.py` and always writes `rss.xml` plus
 `feed.json`. Tests are in `tests/`, with fixtures under `tests/data/`.
-User-facing documentation is straight XHTML in `docs/`, maintained filter
+User-facing documentation is Markdown in `docs/`, maintained filter
 helpers live in `filters/`, and sample configurations live in `examples/`.
 
 ## Build, Test, and Development Commands
