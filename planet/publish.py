@@ -1,7 +1,26 @@
 import os, sys
 import urllib.parse
+import urllib.request
+import urllib.error
 import planet
-import pubsubhubbub_publisher as PuSH
+
+class PublishError(Exception):
+    """Raised when a hub publish request fails."""
+
+def publish_urls(hub, urls):
+    """Publish updated feed URLs to a PubSubHubbub/WebSub hub."""
+    data = urllib.parse.urlencode(
+        {'hub.url': urls, 'hub.mode': 'publish'}, doseq=True)
+    request = urllib.request.Request(hub, data=data.encode('utf-8'))
+    try:
+        urllib.request.urlopen(request)
+    except urllib.error.HTTPError as e:
+        if e.code == 204:
+            return
+        error = e.read().decode('utf-8', 'replace') if hasattr(e, 'read') else ''
+        raise PublishError('%s, Response: "%s"' % (e, error))
+    except OSError as e:
+        raise PublishError(str(e))
 
 def publish(config):
     log = planet.logger
@@ -19,8 +38,8 @@ def publish(config):
     # publish feeds
     if feeds:
         try:
-            PuSH.publish(hub, feeds)
+            publish_urls(hub, feeds)
             for feed in feeds:
                 log.info("Published %s to %s\n" % (feed, hub))
-        except PuSH.PublishError as e:
+        except PublishError as e:
             log.error("PubSubHubbub publishing error: %s\n" % e)
