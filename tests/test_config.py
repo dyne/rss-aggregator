@@ -1,11 +1,35 @@
 #!/usr/bin/env python
 
+import os
+import shutil
+import tempfile
 import unittest
 from planet import config
 
 class ConfigTest(unittest.TestCase):
+    def tearDown(self):
+        workdir = 'tests/work/config'
+        if os.path.exists(workdir):
+            shutil.rmtree(os.path.split(workdir)[0])
+
     def setUp(self):
         config.load('tests/data/config/basic.ini')
+
+    def write_config(self, body):
+        workdir = 'tests/work/config'
+        os.makedirs(workdir, exist_ok=True)
+        handle = tempfile.NamedTemporaryFile(
+            mode='w',
+            suffix='.ini',
+            dir=workdir,
+            delete=False,
+            encoding='utf-8',
+        )
+        try:
+            handle.write(body)
+        finally:
+            handle.close()
+        return handle.name
 
     def test_feeds(self):
         feeds = config.subscriptions()
@@ -63,3 +87,39 @@ class ConfigTest(unittest.TestCase):
         config.load('tests/data/config/filter-options.ini')
         config.parser.set('feed2', 'sed', 'unknown')
         self.assertEqual('', config.sed_filter('feed2'))
+
+    def test_planet_level_fallbacks_and_missing_planet_section(self):
+        path = self.write_config(
+            '[feed-a]\n'
+            'name = one\n'
+            '\n'
+            '[feed-b]\n'
+            'name = two\n'
+        )
+        config.load(path)
+        feeds = config.subscriptions()
+        feeds.sort()
+        self.assertEqual(['feed-a', 'feed-b'], feeds)
+        self.assertEqual({}, config.planet_options())
+        self.assertEqual(None, config.feed())
+        self.assertEqual(None, config.feedtype())
+
+        path = self.write_config(
+            '[Planet]\n'
+            'link = http://example.com/site/\n'
+            '\n'
+            '[feed-a]\n'
+            'name = one\n'
+        )
+        config.load(path)
+        self.assertEqual('http://example.com/site/rss.xml', config.feed())
+        self.assertEqual('rss', config.feedtype())
+
+        path = self.write_config(
+            '[Planet]\n'
+            'link = http://example.com/site/\n'
+            'feed = http://example.com/site/atom.xml\n'
+        )
+        config.load(path)
+        self.assertEqual('http://example.com/site/atom.xml', config.feed())
+        self.assertEqual(None, config.feedtype())
