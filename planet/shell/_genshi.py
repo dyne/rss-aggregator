@@ -18,6 +18,9 @@ def norm(value):
     if hasattr(value,'items'):
         return dict([(norm(n),norm(v)) for n,v in value.items()])
 
+    if isinstance(value, str):
+        return value
+
     try:
         return value.decode('utf-8')
     except:
@@ -98,7 +101,7 @@ def run(script, doc, output_file=None, options={}):
 
         # annotate each entry
         new_date_format = config.new_date_format()
-        vars = feedparser.parse(StringIO(doc))
+        vars = feedparser.parse(doc)
         vars.feeds = [value for name,value in feeds]
         last_feed = None
         last_date = None
