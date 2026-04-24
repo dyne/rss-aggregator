@@ -36,6 +36,11 @@ if vendor_path not in sys.path:
 import feedparser
 feedparser.SANITIZE_HTML=1
 feedparser.RESOLVE_RELATIVE_URIS=0
+try:
+    import feedparser.api
+    feedparser.api.PREFERRED_XML_PARSERS = []
+except Exception:
+    pass
 
 _feedparser_parse = feedparser.parse
 

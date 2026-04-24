@@ -24,7 +24,7 @@ from urllib.parse import urljoin
 
 from . import output
 
-parser = ConfigParser()
+parser = ConfigParser(interpolation=None)
 
 planet_predefined_options = ['filters']
 READING_LIST_TYPES = ('opml', 'csv', 'config')
@@ -126,7 +126,7 @@ def __init__():
 def load(config_files):
     """ initialize and load a configuration"""
     global parser
-    parser = ConfigParser()
+    parser = ConfigParser(interpolation=None)
     parser.read(config_files)
 
     from . import config
@@ -186,14 +186,14 @@ def downloadReadingList(list, orig_config, callback, use_cache=True, re_read=Tru
             
         try:
             if use_cache:
-                cached_config = ConfigParser()
+                cached_config = ConfigParser(interpolation=None)
                 cached_config.read(cache_filename)
                 for option in cached_config.options(list):
                      options[option] = cached_config.get(list,option)
         except:
             pass
 
-        cached_config = ConfigParser()
+        cached_config = ConfigParser(interpolation=None)
         cached_config.add_section(list)
         for key, value in options.items():
             cached_config.set(list, key, value)
