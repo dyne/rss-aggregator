@@ -21,5 +21,9 @@ class ConfigCsvTest(unittest.TestCase):
         self.assertEqual(['feed1', 'feed2'], feeds)
 
     def test_filters(self):
-        self.assertEqual(['foo','bar'], config.filters('feed2'))
-        self.assertEqual(['foo'], config.filters('feed1'))
+        self.assertEqual(
+            ['regexp_sifter.py?require=bar', 'stripAd/yahoo.sed'],
+            config.filters('feed2'))
+        self.assertEqual(
+            ['regexp_sifter.py?require=foo', 'excerpt.py'],
+            config.filters('feed1'))
