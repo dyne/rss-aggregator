@@ -10,6 +10,10 @@ jobs:
   test:
     name: Python tests
     runs-on: ubuntu-latest
+    env:
+      VIRTUAL_ENV: ${{ github.workspace }}/.venv
+      PATH: ${{ github.workspace }}/.venv/bin:${{ env.PATH }}
+      PYTHONPATH: /usr/lib/python3/dist-packages
 
     steps:
       - name: Check out repository
@@ -23,15 +27,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install system XML tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-libxml2 xsltproc
+
       - name: Create uv environment
         run: uv venv --python 3.12 --seed .venv
 
       - name: Install dependencies
-        run: |
-          VIRTUAL_ENV="$PWD/.venv" PATH="$PWD/.venv/bin:$PATH" \
-          uv sync --active --locked
+        run: uv sync --active --locked
 
       - name: Run tests
-        run: |
-          VIRTUAL_ENV="$PWD/.venv" PATH="$PWD/.venv/bin:$PATH" \
-          uv run --active python runtests.py
+        run: uv run --active python runtests.py
