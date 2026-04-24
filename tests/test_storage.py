@@ -116,3 +116,22 @@ class StorageTest(unittest.TestCase):
 
         storage.delete_entry("missing")
         self.assertEqual(1, storage.entries_count())
+
+    def test_clear_id_index_helper(self):
+        storage.clear_id_index()
+
+        index = storage.open_id_index(create=True)
+        index["one"] = "feed:a"
+        index["two"] = "feed:b"
+        index.close()
+
+        index = storage.open_id_index(create=False)
+        self.assertEqual(2, len(index))
+        index.close()
+
+        storage.clear_id_index()
+
+        index = storage.open_id_index(create=False)
+        self.assertEqual(0, len(index))
+        self.assertEqual([], index.keys())
+        index.close()
