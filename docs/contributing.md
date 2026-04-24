@@ -22,6 +22,10 @@ To generate a local coverage report:
 
 >     uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml
 
+If you want quick coverage gains without broad fixture churn, prefer small
+deterministic modules first: `planet/storage.py`, `planet/output.py`,
+`planet/media.py`, `planet/expunge.py`, and `planet/config.py`.
+
 Install development dependencies from the lock file before testing:
 
 >     uv sync

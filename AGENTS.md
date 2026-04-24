@@ -42,6 +42,9 @@ Name new test modules `test_<feature>.py` so pytest discovers them
 automatically. For code changes, run the touched test module first, then
 `uv run pytest` before handing off. When coverage matters, use
 `uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml`.
+For incremental coverage work, start with deterministic modules such as
+`planet/storage.py`, `planet/output.py`, `planet/media.py`, `planet/expunge.py`,
+and `planet/config.py` before broader stateful paths like `planet/spider.py`.
 
 ## Commit & Pull Request Guidelines
 
