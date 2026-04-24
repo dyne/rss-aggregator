@@ -17,5 +17,15 @@ dependencies = [
   "html5lib>=1.1,<2",
 ]
 
+[dependency-groups]
+dev = [
+  "pytest>=8,<9",
+  "pytest-cov>=6,<7",
+]
+
 [tool.setuptools]
 packages = ["planet", "planet.shell"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
