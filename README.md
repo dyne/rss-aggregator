@@ -29,8 +29,8 @@ Optional Python template backends can be installed with extras, for example:
   uv sync --extra django
   uv sync --extra genshi
 ```
-System-backed features such as `xsltproc` templates and Redland RDF reading
-lists still require the matching system packages.
+System-backed features such as `xsltproc` templates still require the
+matching system packages.
 
 To get started, check out the documentation in the docs directory.  If you have
 any questions or comments, please don't hesitate to use Github or our channels:

@@ -108,11 +108,6 @@
                     <img src="images/opml.png" alt="OPML"/>
                   </a>
             </dd>
-            <dd>
-                  <a href="foafroll.xml" title="export the {planet:name} subscription list in FOAF format">
-                    <img src="images/foaf.png" alt="FOAF"/>
-                  </a>
-            </dd>
           </dl>
 
         </div>

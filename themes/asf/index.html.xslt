@@ -69,11 +69,6 @@
                     <img src="images/opml.png" alt="OPML"/>
                   </a>
                 </li>
-                <li>
-                  <a href="foafroll.xml">
-                    <img src="images/foaf.png" alt="FOAF"/>
-                  </a>
-                </li>
               </ul>
             </dd>
           </dl>

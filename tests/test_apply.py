@@ -27,7 +27,7 @@ class ApplyTest(unittest.TestCase):
         splice.apply(self.feeddata)
 
         # verify that selected files are there
-        for file in ['index.html', 'default.css', 'images/foaf.png']:
+        for file in ['index.html', 'default.css']:
             path = os.path.join(workdir, file)
             self.assertTrue(os.path.exists(path))
             self.assertTrue(os.stat(path).st_size > 0, file + ' has size 0')

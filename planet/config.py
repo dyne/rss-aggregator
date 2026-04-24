@@ -142,7 +142,7 @@ def load(config_files):
 
     from . import config
     import planet
-    from planet import opml, foaf, csv_config
+    from planet import opml, csv_config
     log = planet.logger
     if not log:
         log = planet.getLogger(config.log_level(),config.log_format())
@@ -202,8 +202,6 @@ def load(config_files):
         def data2config(data, cached_config):
             if content_type(list).find('opml')>=0:
                 opml.opml2config(data, cached_config)
-            elif content_type(list).find('foaf')>=0:
-                foaf.foaf2config(data, cached_config)
             elif content_type(list).find('csv')>=0:
                 csv_config.csv2config(data, cached_config)
             elif content_type(list).find('config')>=0:
@@ -367,7 +365,7 @@ def reading_lists():
     for section in parser.sections():
         if parser.has_option(section, 'content_type'):
             type = parser.get(section, 'content_type')
-            if type.find('opml')>=0 or type.find('foaf')>=0 or \
+            if type.find('opml')>=0 or \
                type.find('csv')>=0 or type.find('config')>=0 or \
                type.find('.')>=0:
                 result.append(section)
