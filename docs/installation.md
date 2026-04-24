@@ -8,7 +8,12 @@ Install the locked Python dependencies from the checkout with uv:
 
 >     uv sync
 
-The maintained runtime does not require optional template engines or XSLT tooling. If you use the built-in `sed` cleanup option, make sure your system `sed` command is available.
+The maintained runtime has one supported command, `planet.py`. It reads one
+local INI file, fetches feeds, writes `rss.xml` plus `feed.json`, and exits.
+List subscriptions directly in that file; the maintained runtime does not load
+OPML, CSV, or remote config sources. It does not require optional template
+engines or XSLT tooling. If you use the built-in `sed` cleanup option, make
+sure your system `sed` command is available.
 
 ### General Instructions
 
