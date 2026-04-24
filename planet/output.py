@@ -245,6 +245,7 @@ def _build_feed_dict(doc):
         "subtitle": subtitle,
         "description": subtitle or title or config.name(),
         "updated": _element_text(feed, "updated"),
+        "rights": _element_text(feed, "rights"),
         "links": links,
         "home_page_url": home,
         "feed_url": home and urllib.parse.urljoin(home.rstrip("/") + "/", JSON_OUTPUT_NAME) or None,
@@ -299,6 +300,11 @@ def _rss_item_xml(entry):
             f'<media:thumbnail url="{escape(entry["screenshot"])}" />'
         )
     source = entry["source"]
+    source_url = _alternate_url(source.get("links", []))
+    if source.get("title") and source_url:
+        parts.append(
+            f'<source url="{escape(source_url)}">{escape(source["title"])}</source>'
+        )
     if source.get("title"):
         parts.append(f"<planet:source_title>{escape(source['title'])}</planet:source_title>")
     if source.get("id"):
@@ -327,6 +333,8 @@ def render_rss(feed):
     last_build = _format_rss_datetime(feed.get("updated"))
     if last_build:
         rss_parts.append(f"<lastBuildDate>{last_build}</lastBuildDate>")
+    if feed.get("rights"):
+        rss_parts.append(f"<copyright>{escape(feed['rights'])}</copyright>")
     author = _rss_author_text(feed.get("author") or {})
     if author:
         rss_parts.append(f"<managingEditor>{escape(author)}</managingEditor>")
