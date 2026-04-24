@@ -21,13 +21,15 @@ of the cache has changed dramatically.</li>
 <li>Old theme files, <code>.tmpl</code> files, and Django or Genshi output
 templates are no longer part of the maintained product.</li>
 <li>Venus now requires Python 3.9 or newer.</li>
-<li>If you use XSLT-based filters, keep the optional XML libraries described on
-the <a href="installation.html">Installation</a> page.</li>
+<li>Generic filter lists and per-filter sections are gone.  Migrate filtering
+to the built-in <code>excerpt</code>, <code>regexp</code>, and
+<code>sed</code> options.</li>
 </ul>
 
 <p>When migrating a config, keep feed subscriptions, cache settings,
-normalization overrides, and filters.  Remove theme sections and any
-template-specific post-processing.  After that, review
+normalization overrides, and any built-in filter settings you still need.
+Remove theme sections and any old <code>filters = ...</code> or
+<code>filter_directories</code> configuration.  After that, review
 <a href="config.html">configuration</a> and
 <a href="output.html">output files</a> for the maintained behavior.</p>
 </body>

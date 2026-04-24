@@ -49,16 +49,17 @@ set <code>output_dir</code>.</p>
 </dl>
 <dl class="compact code">
 
-<dt>filter</dt>
-<dd>Regular expression that must be found in the textual portion of the entry</dd>
-<dt>exclude</dt>
-<dd>Regular expression that must <b>not</b> be found in the textual portion of the entry</dd>
-<dt>filters</dt>
-<dd>Space-separated list of <a href="filters.html">filters</a> to apply to
-each entry</dd>
-<dt>filter_directories</dt>
-<dd>Space-separated list of directories in which <code>filters</code>
-can be found</dd>
+<dt>excerpt</dt>
+<dd>Boolean toggle that adds a built-in <code>planet:excerpt</code> element
+to each cached entry</dd>
+<dt>regexp</dt>
+<dd>Regular expression that must match the normalized entry text for the entry
+to be kept</dd>
+<dt>sed</dt>
+<dd>Short name of one built-in cleanup script from
+<code>filters/stripAd/</code>.  The maintained values are
+<code>feedburner</code>, <code>google_ad_map</code>, and
+<code>yahoo</code>.</dd>
 
 </dl>
 <dl class="compact code">
@@ -125,12 +126,12 @@ While it is true that few values make sense in all sections; in most cases
 unused parameters cause few problems.</p>
 
 <h3 id="subscription"><code>[</code><em>subscription</em><code>]</code></h3>
-<p>All sections other than <code>planet</code>, <code>DEFAULT</code>, or
-sections named in <code>[planet]</code>'s <code>filters</code> parameter are
+<p>All sections other than <code>planet</code> or <code>DEFAULT</code> are
 treated as subscriptions and typically take the form of a
 <acronym title="Uniform Resource Identifier">URI</acronym>.</p>
 <p>The most common options here are <code>name</code>, content and
-normalization overrides, and feed-specific filters.</p>
+normalization overrides, and the built-in filtering options
+<code>excerpt</code>, <code>regexp</code>, and <code>sed</code>.</p>
 <p>The <code>content_type</code> parameter can be defined to indicate that
 this subscription is a <em>reading list</em>, i.e., is an external list
 of subscriptions.  At the moment, the supported reading list formats are
@@ -139,11 +140,18 @@ support for formats like <code>xoxo</code> could be added.</p>
 <p><a href="normalization.html#overrides">Normalization overrides</a> can
 also be defined here.</p>
 
-<h3 id="filter"><code>[</code><em>filter</em><code>]</code></h3>
-<p>Sections which are listed in <code>[planet] filters</code> are
-processed as <a href="filters.html">filters</a>.</p>
-<p>Parameters which are listed in this section are passed to the filter
-in a language specific manner.  Given the way defaults work, filters
-should be prepared to ignore parameters that they didn't expect.</p>
+<h3 id="filters">Built-in filtering</h3>
+<p>Filtering is part of the maintained configuration surface and does not use
+separate filter sections.  Planet-level values apply to every feed unless a
+subscription overrides them.</p>
+<p>When more than one built-in option is enabled, Venus applies them in this
+fixed order:</p>
+<ol>
+<li><code>regexp</code></li>
+<li><code>sed</code></li>
+<li><code>excerpt</code></li>
+</ol>
+<p>See <a href="filters.html">Filters</a> for the behavioral details and
+examples.</p>
 </body>
 </html>

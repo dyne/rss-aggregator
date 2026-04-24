@@ -16,13 +16,9 @@
 <p>Install the locked Python dependencies from the checkout with uv:</p>
 <blockquote><pre>uv sync</pre></blockquote>
 
-<p>The maintained runtime does not require optional template engines.  The only
-commonly needed extra tool is for XSLT-based filters:</p>
-<ul>
-<li>Usage of XSLT filters requires either
-<a href="http://xmlsoft.org/XSLT/xsltproc2.html">xsltproc</a>
-or <a href="http://xmlsoft.org/XSLT/python.html">python-libxslt</a>.</li>
-</ul>
+<p>The maintained runtime does not require optional template engines or XSLT
+tooling.  If you use the built-in <code>sed</code> cleanup option, make sure
+your system <code>sed</code> command is available.</p>
 
 <h3>General Instructions</h3>
 
@@ -61,8 +57,6 @@ readable by your web server.  Venus will write <code>rss.xml</code> and
 right directory.</p></li>
 <li><p>(Optional)</p>
 <p>Tell us about it! We'd love to link to you on planetplanet.org :-)</p></li>
-<li><p>(Optional)</p>
-<p>Build your own filters and share them.</p></li>
 </ol>
 
 </body>

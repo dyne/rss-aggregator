@@ -8,13 +8,11 @@
 <title>Venus Filters</title>
 </head>
 <body>
-<h2>Filters and Plugins</h2>
-<p>Filters and plugins are simple Unix pipes.  Input comes in
-<code>stdin</code>, parameters come from the config file, and output goes to
-<code>stdout</code>.  Anything written to <code>stderr</code> is logged as an
-ERROR message.  If no <code>stdout</code> is produced, the entry is not written
-to the cache or processed further; in fact, if the entry had previously been
-written to the cache, it will be removed.</p>
+<h2>Filters</h2>
+<p>Venus keeps filtering as a small built-in part of feed configuration.
+Entries are filtered while a feed is fetched and normalized, before they are
+written to the cache and before <code>rss.xml</code> or <code>feed.json</code>
+are generated.</p>
 
 <p>Filters operate on individual normalized entries, not on final output
 files.</p>
@@ -24,74 +22,39 @@ example, if a feed is RSS 1.0 with 10 items, the filter will be called ten
 times, each with a single Atom 1.0 entry, with all textConstructs
 expressed as XHTML, and everything encoded as UTF-8.</p>
 
-<p>You will find a small set of example filters in the <a
-href="../filters">filters</a> directory.  The <a
-href="../filters/coral_cdn_filter.py">coral cdn filter</a> will change links
-to images in the entry itself.  The filters in the <a
-href="../filters/stripAd/">stripAd</a> subdirectory will strip specific
-types of advertisements that you may find in feeds.</p>
-
-<p>The <a href="../filters/excerpt.py">excerpt</a> filter adds metadata (in
-the form of a <code>planet:excerpt</code> element) to the feed itself.  You
-can see examples of how parameters are passed to this program in either
-<a href="../tests/data/filter/excerpt-images.ini">excerpt-images</a> or 
-<a href="../examples/opml-top100.ini">opml-top100.ini</a>.
-Alternately parameters may be passed
-<abbr title="Uniform Resource Identifier">URI</abbr> style, for example: 
-<a href="../tests/data/filter/excerpt-images2.ini">excerpt-images2</a>.
-</p>
-
-<p>The <a href="../filters/xpath_sifter.py">xpath sifter</a> is a variation of
-the above, including or excluding feeds based on the presence (or absence) of
-data specified by <a href="http://www.w3.org/TR/xpath20/">xpath</a>
-expressions.  Again, parameters can be passed as
-<a href="../tests/data/filter/xpath-sifter.ini">config options</a> or 
-<a href="../tests/data/filter/xpath-sifter2.ini">URI style</a>.
-</p>
-
-<p>The <a href="../filters/regexp_sifter.py">regexp sifter</a> operates just
-like the xpath sifter, except it uses
-<a href="http://docs.python.org/lib/re-syntax.html">regular expressions</a>
-instead of XPath expressions.</p>
+<p>The maintained filtering contract has three options:</p>
+<dl>
+<dt><code>excerpt = true</code></dt>
+<dd>Adds a built-in <code>planet:excerpt</code> element to each kept entry.
+See <a href="../examples/opml-top100.ini">opml-top100.ini</a> for a minimal
+planet-wide example.</dd>
+<dt><code>regexp = ...</code></dt>
+<dd>Keeps only entries whose normalized text matches the given regular
+expression.  This is backed by the maintained
+<a href="../filters/regexp_sifter.py">regexp helper</a>, but the config
+surface is the built-in <code>regexp</code> option rather than
+<code>filters=...</code>.</dd>
+<dt><code>sed = ...</code></dt>
+<dd>Runs one built-in cleanup script from <a href="../filters/stripAd/">the
+stripAd directory</a>.  Supported values are <code>feedburner</code>,
+<code>google_ad_map</code>, and <code>yahoo</code>.</dd>
+</dl>
 
 <h3>Notes</h3>
 
 <ul>
-<li>Any filters listed in the <code>[planet]</code> section of your config.ini
-will be invoked on all feeds.  Filters listed in individual
-<code>[feed]</code> sections will only be invoked on those feeds.</li>
+<li>Planet-level values apply to every feed; feed-level values override them
+for one subscription.</li>
 
-<li>Input filters are executed when a feed is fetched, and the results are
-placed into the cache.  Changing a configuration file alone is not sufficient to
-change the contents of the cache &mdash; typically that only occurs after
-a feed is modified.</li>
+<li>Entries are processed in a fixed order: <code>regexp</code>, then
+<code>sed</code>, then <code>excerpt</code>.</li>
 
-<li>Filters are simply invoked in the order they are listed in the
-configuration file (think unix pipes). Planet wide filters are executed before
-feed specific filters.</li>
+<li>If a filter step produces no output, the entry is not written to the cache
+or processed further.</li>
 
-<li>The file extension of the filter is significant.  <code>.py</code> invokes
-python.  <code>.plugin</code> runs an in-process Python plugin.
-<code>.xslt</code> invokes XSLT, and <code>.sed</code> invokes sed.</li>
-
-<li>If the filter name contains a redirection character (<code>&gt;</code>),
-then the output stream is
-<a href="http://en.wikipedia.org/wiki/Tee_(Unix)">tee</a>d; one branch flows
-through the specified filter and the output is planced into the named file; the
-other unmodified branch continues onto the next filter, if any.
-One use case for this function is to use
-<a href="../filters/xhtml2html.plugin">xhtml2html</a> to produce both an XHTML
-and an HTML output stream from one source.</li>
-
-<li>Plugins differ from filters in that while filters are forked, plugins are
-<a href="http://docs.python.org/lib/module-imp.html">imported</a>.  This
-means that plugins are limited to Python and are run in-process.  Plugins
-therefore have direct access to planet internals like configuration and
-logging facitilies, as well as access to the bundled libraries like the
-<a href="http://feedparser.org/docs/">Universal Feed Parser</a> and
-<a href="http://code.google.com/p/html5lib/">html5lib</a>; but it also
-means that functions like <code>os.abort()</code> can't be recovered
-from.</li>
+<li>Changing filter configuration does not rewrite old cache entries by
+itself.  Run Venus again so the affected feeds are fetched and cached with the
+new settings.</li>
 </ul>
 </body>
 </html>
