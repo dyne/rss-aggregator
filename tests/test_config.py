@@ -46,3 +46,11 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(30,
             config.feed_timeout())
 
+    def test_filter_option_accessors(self):
+        config.load('tests/data/config/filter-options.ini')
+        self.assertEqual(True, config.excerpt('feed1'))
+        self.assertEqual(False, config.excerpt('feed2'))
+        self.assertEqual('planet', config.regexp('feed1'))
+        self.assertEqual('mars', config.regexp('feed2'))
+        self.assertEqual('yahoo', config.sed('feed1'))
+        self.assertEqual('feedburner', config.sed('feed2'))
