@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VIRTUAL_ENV: ${{ github.workspace }}/.venv
-      PATH: ${{ github.workspace }}/.venv/bin:${{ env.PATH }}
       PYTHONPATH: /usr/lib/python3/dist-packages
 
     steps:
@@ -34,6 +33,9 @@ jobs:
 
       - name: Create uv environment
         run: uv venv --python 3.12 --seed .venv
+
+      - name: Add venv to PATH
+        run: echo "${{ github.workspace }}/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Install dependencies
         run: uv sync --active --locked
