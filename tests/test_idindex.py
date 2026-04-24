@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+import shutil
 import unittest, planet
 from planet import idindex, config
 
@@ -9,6 +11,13 @@ class idIndexTest(unittest.TestCase):
         # silence errors
         self.original_logger = planet.logger
         planet.getLogger('CRITICAL',None)
+        from . import test_spider
+        if os.path.exists(test_spider.workdir):
+            shutil.rmtree(test_spider.workdir)
+            try:
+                os.removedirs(os.path.split(test_spider.workdir)[0])
+            except OSError:
+                pass
 
     def tearDown(self):
         idindex.destroy()
@@ -65,10 +74,3 @@ class idIndexTest(unittest.TestCase):
         self.assertEqual(8,len(doc.getElementsByTagName('entry')))
         self.assertEqual(4,len(doc.getElementsByTagName('planet:source')))
         self.assertEqual(12,len(doc.getElementsByTagName('planet:name')))
-
-try:
-    module = 'dbhash'
-except ImportError:
-    planet.logger.warn("dbhash is not available => can't test id index")
-    for method in dir(idIndexTest):
-        if method.startswith('test_'):  delattr(idIndexTest,method)
