@@ -3,6 +3,12 @@ import os
 import sys
 
 logged_modes = []
+SUPPORTED_FILTER_MODULES = {
+    'plugin': 'plugin',
+    'py': 'py',
+    'sed': 'sed',
+    'xslt': 'xslt',
+}
 
 def run(template_file, doc, mode='template'):
     """ select a template module based on file extension and execute it """
@@ -43,11 +49,14 @@ def run(template_file, doc, mode='template'):
     # Try loading module for processing this template, based on the extension
     base,ext = os.path.splitext(os.path.basename(template_resolved))
     module_name = ext[1:]
+    if module_name not in SUPPORTED_FILTER_MODULES:
+        return log.error("Skipping %s '%s': unsupported filter type '%s'",
+            mode, template_resolved, module_name)
     try:
         try:
-            module = __import__("_" + module_name)
+            module = __import__("_" + SUPPORTED_FILTER_MODULES[module_name])
         except:
-            module = __import__(module_name)
+            module = __import__(SUPPORTED_FILTER_MODULES[module_name])
     except Exception as inst:
         return log.error("Skipping %s '%s' after failing to load '%s': %s", 
             mode, template_resolved, module_name, inst)

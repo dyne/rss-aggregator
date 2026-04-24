@@ -152,6 +152,11 @@ class FilterTests(unittest.TestCase):
         self.assertTrue(output.find('/>')<0)
         self.assertTrue(output.find('</script>')>=0)
 
+    def test_unsupported_filter_type_is_rejected(self):
+        testfile = 'tests/data/filter/index.html'
+        self.assertEqual(None,
+            shell.run('unsupported.tmpl', open(testfile).read(), mode="filter"))
+
 try:
     from subprocess import Popen, PIPE
 
