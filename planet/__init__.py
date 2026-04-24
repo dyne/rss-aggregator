@@ -37,6 +37,54 @@ import feedparser
 feedparser.SANITIZE_HTML=1
 feedparser.RESOLVE_RELATIVE_URIS=0
 
+_feedparser_parse = feedparser.parse
+
+def _source_text(source):
+    """Return source XML text when parse input can be inspected cheaply."""
+    if isinstance(source, bytes):
+        return source.decode('utf-8', 'replace')
+    if isinstance(source, str):
+        if os.path.exists(source):
+            with open(source, encoding='utf-8', errors='replace') as handle:
+                return handle.read()
+        return source
+    return None
+
+def _gr_original_ids(source):
+    """Extract Google Reader original entry ids not exposed by feedparser 6."""
+    xml = _source_text(source)
+    if not xml or 'original-id' not in xml:
+        return []
+    try:
+        from xml.dom import minidom
+        doc = minidom.parseString(xml)
+    except Exception:
+        return []
+
+    ids = []
+    namespace = 'http://www.google.com/schemas/reader/atom/'
+    for entry in doc.getElementsByTagName('entry'):
+        id_nodes = entry.getElementsByTagName('id')
+        if not id_nodes:
+            ids.append(None)
+            continue
+        original = id_nodes[0].getAttributeNS(namespace, 'original-id') or \
+            id_nodes[0].getAttribute('gr:original-id')
+        ids.append(original or None)
+    doc.unlink()
+    return ids
+
+def _parse(source, *args, **kwargs):
+    """Parse feeds with small Venus compatibility patches."""
+    original_ids = _gr_original_ids(source)
+    parsed = _feedparser_parse(source, *args, **kwargs)
+    for entry, original_id in zip(parsed.get('entries', []), original_ids):
+        if original_id:
+            entry['id'] = original_id
+    return parsed
+
+feedparser.parse = _parse
+
 if not hasattr(feedparser, '_parse_date_iso8601'):
     def _parse_date_iso8601(value):
         """Parse the ISO-8601 dates Venus used from older feedparser."""
