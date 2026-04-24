@@ -23,11 +23,10 @@ straight XHTML.</p>
 <a href="http://intertwingly.net/code/venus/tests/">tests</a> directory, and
 make use of the
 <a href="https://docs.python.org/3/library/unittest.html">Python unittest framework</a>.  To run them, simply enter:</p>
-<blockquote><pre>python3 runtests.py</pre></blockquote>
+<blockquote><pre>uv run python runtests.py</pre></blockquote>
 
-<p>Install development dependencies from the repository metadata before
-testing:</p>
-<blockquote><pre>python3 -m pip install -e .</pre></blockquote>
+<p>Install development dependencies from the lock file before testing:</p>
+<blockquote><pre>uv sync</pre></blockquote>
 
 <h3>Git</h3>
 <p>If you have done a <a href="index.html">git pull</a>, you have already set up

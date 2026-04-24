@@ -11,16 +11,27 @@ and Atom feeds, html5lib to normalize markup, and either Tomas Styblo's
 templating engine or an optional XSLT backend to output static files in any
 format you can dream up.
 
-RSS-Aggregator runs on Python 3. Install the runtime dependencies from the
-checkout with:
+RSS-Aggregator runs on Python 3. Install the locked runtime dependencies from
+the checkout with uv:
 ```
-  python3 -m pip install -e .
+  uv sync
 ```
 Run the test suite with:
 ```
-  python3 runtests.py
+  uv run python runtests.py
 ```
+Run the aggregator with:
+```
+  uv run python planet.py pathto/config.ini
+```
+Optional Python template backends can be installed with extras, for example:
+```
+  uv sync --extra django
+  uv sync --extra genshi
+```
+System-backed features such as `xsltproc` templates still require the
+matching system packages.
+
 To get started, check out the documentation in the docs directory.  If you have
 any questions or comments, please don't hesitate to use Github or our channels:
 https://dyne.org/contact
-

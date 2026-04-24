@@ -1,0 +1,42 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Python tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install optional system components
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-libxml2 xsltproc
+
+      - name: Create uv environment with system site packages
+        run: uv venv --python 3.12 --seed --system-site-packages .venv
+
+      - name: Install dependencies and extras
+        run: |
+          VIRTUAL_ENV="$PWD/.venv" PATH="$PWD/.venv/bin:$PATH" \
+          uv sync --active --locked --all-extras
+
+      - name: Run tests
+        run: |
+          VIRTUAL_ENV="$PWD/.venv" PATH="$PWD/.venv/bin:$PATH" \
+          uv run --active python runtests.py

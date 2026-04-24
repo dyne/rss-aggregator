@@ -12,13 +12,13 @@ straight XHTML in `docs/`. Feed filters live in `filters/`, themes in
 
 ## Build, Test, and Development Commands
 
-- `python3 -m pip install -e .`: install Python 3 runtime dependencies from
-  `pyproject.toml`.
-- `python3 runtests.py`: run the full unittest suite.
-- `python3 runtests.py -v`: run tests with debug logging and verbose output.
-- `python3 runtests.py test_scrub.py`: run one test module from `tests/`.
-- `python3 planet.py examples/planet-schmanet.ini`: run the aggregator with a
-  sample configuration.
+- `uv sync`: install locked Python 3 runtime dependencies from `uv.lock`.
+- `uv run python runtests.py`: run the full unittest suite.
+- `uv run python runtests.py -v`: run tests with debug logging and verbose
+  output.
+- `uv run python runtests.py test_scrub.py`: run one test module from `tests/`.
+- `uv run python planet.py pathto/config.ini`: run the aggregator with a local
+  configuration.
 
 There is no generated build step. Work directly from the checkout and keep
 commands runnable from the repository root.
@@ -38,7 +38,7 @@ Tests use the standard library `unittest` framework through `runtests.py`.
 Add regression tests beside related coverage in `tests/`, and put reusable
 fixtures in `tests/data/`. Name new test modules `test_<feature>.py` so the
 runner discovers them automatically. For code changes, run the touched test
-module first, then `python3 runtests.py` before handing off.
+module first, then `uv run python runtests.py` before handing off.
 
 ## Commit & Pull Request Guidelines
 

@@ -13,18 +13,17 @@
 
 <p>You'll need Python 3.9 or newer installed on your system.</p>
 
-<p>Install the basic Python dependencies from the checkout:</p>
-<blockquote><pre>python3 -m pip install -e .</pre></blockquote>
+<p>Install the locked Python dependencies from the checkout with uv:</p>
+<blockquote><pre>uv sync</pre></blockquote>
 
 <p>Some optional features require additional libraries or system tools:</p>
 <ul>
 <li>Usage of XSLT requires either
 <a href="http://xmlsoft.org/XSLT/xsltproc2.html">xsltproc</a>
 or <a href="http://xmlsoft.org/XSLT/python.html">python-libxslt</a>.</li>
-<li>Usage of FOAF as a reading list requires
-<a href="http://librdf.org/">librdf</a>.</li>
 <li>Django and Genshi template filters require their corresponding Python
-packages.</li>
+packages. Install them with <code>uv sync --extra django</code> or
+<code>uv sync --extra genshi</code>.</li>
 </ul>
 
 <h3>General Instructions</h3>
@@ -42,7 +41,7 @@ and <code>~/venus</code> are good
 choices, but so's anywhere else you prefer.</p></li>
 <li><p>This is very important: from within that directory, type the following
 command:</p>
-<blockquote><code>python3 runtests.py</code></blockquote>
+<blockquote><code>uv run python runtests.py</code></blockquote>
 <p>This should take anywhere from a one to ten seconds to execute.  No network
 connection is required, and the script cleans up after itself.  If the
 script completes with an "OK", you are good to go.  Otherwise stopping here
@@ -58,7 +57,7 @@ it's pretty well documented so you shouldn't have any problems here.  Pay
 particular attention to the <code>output_dir</code> option, which should be
 readable by your web server.  If the directory you specify in your
 <code>cache_dir</code> exists; make sure that it is empty.</p></li>
-<li><p>Run it: <code>python3 planet.py pathto/config.ini</code></p>
+<li><p>Run it: <code>uv run python planet.py pathto/config.ini</code></p>
 <p>You'll want to add this to cron, make sure you run it from the
 right directory.</p></li>
 <li><p>(Optional)</p>

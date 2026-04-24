@@ -46,7 +46,7 @@ class DjangoFilterTests(unittest.TestCase):
         
 
 try:
-    from django.conf import settings
+    import django  # noqa: F401
 except ImportError:
     logger.warn("Django is not available => can't test django filters")
     for method in dir(DjangoFilterTests):
