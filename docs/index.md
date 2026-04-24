@@ -1,5 +1,9 @@
 ## Table of Contents
 
+The maintained product shape is intentionally small: run `planet.py` with one
+local INI file, list subscriptions directly in that file, and Venus will write
+`rss.xml` plus `feed.json` and exit.
+
 - [Getting started](installation.md)
 - Basic Features
   - [Configuration](config.md)
