@@ -3,7 +3,7 @@
 Venus writes two built-in files into `output_dir` on every successful run:
 
 `rss.xml`  
-The aggregated RSS feed. This is the canonical syndication output and the default file announced to PubSubHubbub hubs.
+The aggregated RSS feed. This is the canonical syndication output.
 
 `feed.json`  
 A JSON Feed style document for applications and downstream tooling. It includes item attachments, source metadata, and screenshots when available.
