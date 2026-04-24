@@ -26,8 +26,7 @@ def splice():
         ]
         entries_to_process.sort(key=lambda row: row[3], reverse=True)
 
-    max_items=max([config.items_per_page(templ)
-        for templ in config.template_files() or ['Planet']])
+    max_items = config.items_per_page()
 
     doc = minidom.parseString('<feed xmlns="http://www.w3.org/2005/Atom"/>')
     feed = doc.documentElement

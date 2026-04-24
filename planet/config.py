@@ -10,17 +10,9 @@ Usage:
   import config
   config.load('config.ini')
 
-  # administrative / structural information
-  print config.template_files()
-  print config.subscriptions()
-
   # planet wide configuration
   print config.name()
   print config.link()
-
-  # per template configuration
-  print config.days_per_page('atom.xml.tmpl')
-  print config.encoding('index.html.tmpl')
 
 Todo:
   * error handling (example: no planet section)
@@ -102,7 +94,6 @@ def __init__():
     define_planet('generator_uri', 'http://intertwingly.net/code/venus/')
     define_planet('owner_name', 'Anonymous Coward')
     define_planet('owner_email', '')
-    define_planet('output_theme', '')
     define_planet('output_dir', 'output')
     define_planet('spider_threads', 0) 
     define_planet('pubsubhubbub_hub', '')
@@ -111,16 +102,11 @@ def __init__():
     define_planet_int('new_feed_items', 0) 
     define_planet_int('feed_timeout', 20)
     define_planet_int('cache_keep_entries', 10)
+    define_planet_int('items_per_page', 60)
 
-    define_planet_list('template_files')
-    define_planet_list('bill_of_materials')
-    define_planet_list('template_directories', '.')
     define_planet_list('filter_directories', 'filters')
-    define_planet('django_autoescape', 'on')
 
-    # template options
-    define_tmpl_int('days_per_page', 0)
-    define_tmpl_int('items_per_page', 60)
+    # section-level options still used by feeds and filters
     define_tmpl_int('activity_threshold', 0)
     define_tmpl('encoding', 'utf-8')
     define_tmpl('content_type', 'utf-8')
@@ -146,46 +132,6 @@ def load(config_files):
     log = planet.logger
     if not log:
         log = planet.getLogger(config.log_level(),config.log_format())
-
-    # Theme support
-    theme = config.output_theme()
-    if theme:
-        for path in ("", os.path.join(sys.path[0],'themes')):
-            theme_dir = os.path.join(path,theme)
-            theme_file = os.path.join(theme_dir,'config.ini')
-            if os.path.exists(theme_file):
-                # initial search list for theme directories
-                dirs = config.template_directories()
-                if theme_dir not in dirs:
-                    dirs.append(theme_dir)
-                if not hasattr(config_files, 'append'):
-                    config_files = [config_files]
-                for config_file in config_files:
-                    if os.path.dirname(config_file) not in dirs:
-                        dirs.append(os.path.dirname(config_file))
-
-                # read in the theme
-                parser = ConfigParser()
-                parser.read(theme_file)
-                bom = config.bill_of_materials()
-
-                # complete search list for theme directories
-                dirs += [os.path.join(theme_dir,dir) for dir in 
-                    config.template_directories() if dir not in dirs]
-
-                # merge configurations, allowing current one to override theme
-                template_files = config.template_files()
-                parser.set('Planet','template_files','')
-                parser.read(config_files)
-                for file in config.bill_of_materials():
-                    if not file in bom: bom.append(file)
-                parser.set('Planet', 'bill_of_materials', ' '.join(bom))
-                parser.set('Planet', 'template_directories', ' '.join(dirs))
-                parser.set('Planet', 'template_files',
-                   ' '.join(template_files + config.template_files()))
-                break
-        else:
-            log.error('Unable to find theme %s', theme)
 
     # Filter support
     dirs = config.filter_directories()
@@ -340,23 +286,18 @@ def feed():
     if parser.has_option('Planet', 'feed'):
         return parser.get('Planet', 'feed')
     elif link():
-        for template_file in template_files():
-            name = os.path.splitext(os.path.basename(template_file))[0]
-            if name.find('atom')>=0 or name.find('rss')>=0:
-                return urljoin(link(), name)
+        return urljoin(link(), 'rss.xml')
 
 def feedtype():
     if parser.has_option('Planet', 'feedtype'):
         return parser.get('Planet', 'feedtype')
-    elif feed() and feed().find('atom')>=0:
-        return 'atom'
     elif feed() and feed().find('rss')>=0:
         return 'rss'
 
 def subscriptions():
     """ list the feed subscriptions """
     return list(__builtins__['filter'](lambda feed: feed!='Planet' and 
-        feed not in template_files()+filters()+reading_lists(),
+        feed not in filters()+reading_lists(),
         parser.sections()))
 
 def reading_lists():
@@ -381,7 +322,7 @@ def filters(section=None):
     if exclude(section):
         filters.append('regexp_sifter.py?exclude=' +
             urllib.parse.quote(exclude(section)))
-    for section in section and [section] or template_files():
+    for section in section and [section] or []:
         if parser.has_option(section, 'filters'):
             filters += parser.get(section, 'filters').split()
     return filters
@@ -403,10 +344,6 @@ def feed_options(section):
         options.update(dict(map(lambda opt: (opt, parser.get(section,opt)),
             parser.options(section))))
     return options
-
-def template_options(section):
-    """ dictionary of template specific options"""
-    return feed_options(section)
 
 def filter_options(section):
     """ dictionary of filter specific options"""
