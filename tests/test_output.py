@@ -240,3 +240,71 @@ class OutputTest(unittest.TestCase):
         self.assertEqual("0", enclosure.getAttribute("length"))
         source = second_item.getElementsByTagName("source")[0]
         self.assertEqual("http://example.com/source", source.getAttribute("url"))
+
+    def test_json_item_and_feed_fallbacks(self):
+        item = output._json_item({
+            "id": "tag:example.com,2026:json",
+            "updated": "2026-04-24T12:00:00Z",
+            "published": None,
+            "title": "JSON Entry",
+            "summary": "<p>Summary</p>",
+            "content": None,
+            "categories": ["alpha"],
+            "links": [
+                {"rel": "enclosure", "href": "", "type": "image/png", "length": "12"},
+                {"rel": "enclosure", "href": "http://example.com/a.bin", "type": None, "length": "bad"},
+                {"rel": "alternate", "href": "http://example.com/post"},
+            ],
+            "author": {"name": "Entry Author", "uri": "http://example.com/authors/entry"},
+            "screenshot": "http://example.com/item.png",
+            "source": {
+                "id": "source:json",
+                "title": "JSON Source",
+                "subtitle": None,
+                "icon": None,
+                "logo": None,
+                "screenshot": "http://example.com/source.png",
+                "author": None,
+                "categories": [],
+                "links": [{"rel": "related", "href": "http://example.com/source"}],
+                "planet_name": "Venus",
+            },
+        })
+
+        self.assertEqual("http://example.com/post", item["url"])
+        self.assertEqual(
+            [{"url": "http://example.com/a.bin", "mime_type": "application/octet-stream", "size_in_bytes": None}],
+            item["attachments"])
+        self.assertEqual(
+            [{"name": "Entry Author", "url": "http://example.com/authors/entry"}],
+            item["authors"])
+        self.assertEqual("http://example.com/source", item["_source"]["url"])
+        self.assertEqual({"planet_name": "Venus"}, item["_source"]["planet"])
+
+        json_feed = json.loads(output.render_json({
+            "title": "JSON Feed",
+            "home_page_url": None,
+            "feed_url": None,
+            "subtitle": None,
+            "author": {"name": None, "uri": None},
+            "items": [item],
+        }))
+        self.assertFalse("authors" in json_feed)
+
+    def test_build_feed_model_prefers_link_fallbacks_for_json(self):
+        config.load(configfile)
+        feed = output.build_feed_model(
+            '<feed xmlns="http://www.w3.org/2005/Atom">'
+            '<title>JSON Fallbacks</title>'
+            '<link href="http://example.com/from-first-link" />'
+            '<entry>'
+            '<id>tag:example.com,2026:3</id>'
+            '<title>Entry</title>'
+            '<updated>2026-04-24T12:00:00Z</updated>'
+            '<link href="http://example.com/entry" />'
+            '</entry>'
+            '</feed>'
+        )
+
+        self.assertEqual("http://example.com/from-first-link", feed["home_page_url"])
+        self.assertEqual("http://example.com/from-first-link/feed.json", feed["feed_url"])
