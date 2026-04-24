@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import glob, unittest, os, sys
 
-# python 2.2 accomodations
+# python 2.2 accommodations
 try:
     from trace import fullmodname
-except:
+except ImportError:
     def fullmodname(path):
         return os.path.splitext(path)[0].replace(os.sep, '.')
 
@@ -28,7 +28,7 @@ for arg,value in (('-q',0),('--quiet',0),('-v',2),('--verbose',2)):
 # find all of the planet test modules
 modules = []
 for pattern in sys.argv[1:] or ['test_*.py']:
-    modules += map(fullmodname, glob.glob(os.path.join('tests', pattern)))
+    modules += list(map(fullmodname, glob.glob(os.path.join('tests', pattern))))
 
 # enable logging
 import planet
@@ -39,7 +39,7 @@ if verbosity == 2: planet.getLogger("DEBUG",None)
 # load all of the tests into a suite
 try:
     suite = unittest.TestLoader().loadTestsFromNames(modules)
-except Exception, exception:
+except Exception:
     # attempt to produce a more specific message
     for module in modules: __import__(module)
     raise
