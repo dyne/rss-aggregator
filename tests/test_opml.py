@@ -2,7 +2,7 @@
 
 import unittest
 from planet.opml import opml2config
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 class OpmlTest(unittest.TestCase):
     """
@@ -145,32 +145,32 @@ class OpmlTest(unittest.TestCase):
         self.assertFalse(self.config.has_section("http://example.com/feed.xml"))
 
     def test_text_utf8(self):
-        opml2config('''<outline type="rss"
+        opml2config(b'''<outline type="rss"
                                 xmlUrl="http://example.com/feed.xml"
                                 text="Se\xc3\xb1or Frog\xe2\x80\x99s"/>''',
                     self.config)
-        self.assertEqual('Se\xc3\xb1or Frog\xe2\x80\x99s',
+        self.assertEqual('Se\u00f1or Frog\u2019s',
            self.config.get("http://example.com/feed.xml", 'name'))
 
     def test_text_win_1252(self):
-        opml2config('''<outline type="rss"
+        opml2config(b'''<outline type="rss"
                                 xmlUrl="http://example.com/feed.xml"
                                 text="Se\xf1or Frog\x92s"/>''', self.config)
-        self.assertEqual('Se\xc3\xb1or Frog\xe2\x80\x99s',
+        self.assertEqual('Se\u00f1or Frog\u2019s',
            self.config.get("http://example.com/feed.xml", 'name'))
 
     def test_text_entity(self):
         opml2config('''<outline type="rss"
                                 xmlUrl="http://example.com/feed.xml"
                                 text="Se&ntilde;or Frog&rsquo;s"/>''', self.config)
-        self.assertEqual('Se\xc3\xb1or Frog\xe2\x80\x99s',
+        self.assertEqual('Se\u00f1or Frog\u2019s',
            self.config.get("http://example.com/feed.xml", 'name'))
 
     def test_text_double_escaped(self):
         opml2config('''<outline type="rss"
                                 xmlUrl="http://example.com/feed.xml"
                                 text="Se&amp;ntilde;or Frog&amp;rsquo;s"/>''', self.config)
-        self.assertEqual('Se\xc3\xb1or Frog\xe2\x80\x99s',
+        self.assertEqual('Se\u00f1or Frog\u2019s',
            self.config.get("http://example.com/feed.xml", 'name'))
 
 if __name__ == '__main__':

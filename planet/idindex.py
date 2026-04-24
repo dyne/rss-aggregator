@@ -13,9 +13,9 @@ def open():
         cache = config.cache_directory()
         index=os.path.join(cache,'index')
         if not os.path.exists(index): return None
-        import dbhash
-        return dbhash.open(filename(index, 'id'),'w')
-    except Exception, e:
+        import dbm.bsd
+        return dbm.bsd.open(filename(index, 'id'),'w')
+    except Exception as e:
         if e.__class__.__name__ == 'DBError': e = e.args[-1]
         from planet import logger as log
         log.error(str(e))
@@ -35,8 +35,8 @@ def create():
     cache = config.cache_directory()
     index=os.path.join(cache,'index')
     if not os.path.exists(index): os.makedirs(index)
-    import dbhash
-    index = dbhash.open(filename(index, 'id'),'c')
+    import dbm.bsd
+    index = dbm.bsd.open(filename(index, 'id'),'c')
 
     try:
         import libxml2
@@ -80,7 +80,7 @@ def create():
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print 'Usage: %s [-c|-d]' % sys.argv[0]
+        print('Usage: %s [-c|-d]' % sys.argv[0])
         sys.exit(1)
 
     config.load(sys.argv[1])

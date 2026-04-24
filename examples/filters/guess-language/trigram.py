@@ -12,7 +12,7 @@ __authors__ = [ "Douglas Bagnall", "Eric van der Vlist <vdv@dyomedea.com>"]
 __license__ = "Python"
 
 import random
-from urllib import urlopen
+from urllib.request import urlopen
 
 class Trigram:
     """
@@ -68,14 +68,14 @@ class Trigram:
             self.parseFile(fn)
 
     def _parseAFragment(self, line, pair='  '):
-	for letter in line:
-	    d = self.lut.setdefault(pair, {})
+        for letter in line:
+            d = self.lut.setdefault(pair, {})
             d[letter] = d.get(letter, 0) + 1
             pair = pair[1] + letter
-	return pair
+        return pair
 
     def parseString(self, string):
-	self._parseAFragment(string)
+        self._parseAFragment(string)
         self.measure()
     
     def parseFile(self, fn, encoding="iso-8859-1"):
@@ -165,23 +165,23 @@ def test():
     no2 = Trigram('http://gutenberg.net/dirs/1/3/0/4/13041/13041-8.txt')
     en2 = Trigram('http://gutenberg.net/dirs/etext05/cfgsh10.txt')
     fr2 = Trigram('http://gutenberg.net/dirs/1/3/7/0/13704/13704-8.txt')
-    print "calculating difference:"
-    print "en - fr is %s" % (en - fr)
-    print "fr - en is %s" % (fr - en)
-    print "en - en2 is %s" % (en - en2)
-    print "en - fr2 is %s" % (en - fr2)
-    print "fr - en2 is %s" % (fr - en2)
-    print "fr - fr2 is %s" % (fr - fr2)
-    print "fr2 - en2 is %s" % (fr2 - en2)
-    print "fi - fr  is %s" % (fi - fr)
-    print "fi - en  is %s" % (fi - en)
-    print "fi - se  is %s" % (fi - se)
-    print "no - se  is %s" % (no - se)
-    print "en - no  is %s" % (en - no)
-    print "no - no2  is %s" % (no - no2)
-    print "se - no2  is %s" % (se - no2)
-    print "en - no2  is %s" % (en - no2)
-    print "fr - no2  is %s" % (fr - no2)
+    print("calculating difference:")
+    print("en - fr is %s" % (en - fr))
+    print("fr - en is %s" % (fr - en))
+    print("en - en2 is %s" % (en - en2))
+    print("en - fr2 is %s" % (en - fr2))
+    print("fr - en2 is %s" % (fr - en2))
+    print("fr - fr2 is %s" % (fr - fr2))
+    print("fr2 - en2 is %s" % (fr2 - en2))
+    print("fi - fr  is %s" % (fi - fr))
+    print("fi - en  is %s" % (fi - en))
+    print("fi - se  is %s" % (fi - se))
+    print("no - se  is %s" % (no - se))
+    print("en - no  is %s" % (en - no))
+    print("no - no2  is %s" % (no - no2))
+    print("se - no2  is %s" % (se - no2))
+    print("en - no2  is %s" % (en - no2))
+    print("fr - no2  is %s" % (fr - no2))
 
 
 if __name__ == '__main__':

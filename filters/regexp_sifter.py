@@ -31,14 +31,14 @@ for pattern,replacement in [
   data=pattern.sub(replacement,data)
 
 # process requirements
-if options.has_key('--require'):
+if '--require' in options:
   for regexp in options['--require'].split('\n'):
      if regexp and not re.search(regexp,data): sys.exit(1)
 
 # process exclusions
-if options.has_key('--exclude'):
+if '--exclude' in options:
   for regexp in options['--exclude'].split('\n'):
      if regexp and re.search(regexp,data): sys.exit(1)
 
 # if we get this far, the feed is to be included
-print doc
+print(doc)

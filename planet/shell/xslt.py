@@ -2,7 +2,7 @@ import os
 
 def quote(string, apos):
     """ quote a string so that it can be passed as a parameter """
-    if type(string) == unicode:
+    if type(string) == str:
         string=string.encode('utf-8')
     if apos.startswith("\\"): string.replace('\\','\\\\')
 

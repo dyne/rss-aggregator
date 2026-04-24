@@ -84,7 +84,7 @@ class copy:
             target.appendChild(self.dom.createTextNode(source))
             self.textlen = len(lines[0])
         elif lines:
-            excerpt = source[:len(lines[0])-self.textlen] + u' \u2026'
+            excerpt = source[:len(lines[0])-self.textlen] + ' \u2026'
             target.appendChild(dom.createTextNode(excerpt))
             self.full = True
 
@@ -106,4 +106,4 @@ if source:
         source[0].parentNode.removeChild(source[0])
 
 # print out results
-print dom.toxml('utf-8')
+print(dom.toxml('utf-8'))

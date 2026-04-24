@@ -4,11 +4,11 @@ logger = None
 loggerParms = None
 
 import os, sys, re
-import config
+from . import config
 config.__init__()
 
-from ConfigParser import ConfigParser
-from urlparse import urljoin
+from configparser import ConfigParser
+from urllib.parse import urljoin
 
 def getLogger(level, format):
     """ get a logger with the specified log level """
@@ -32,11 +32,11 @@ def getLogger(level, format):
     loggerParms = (level,format)
     return logger
 
-sys.path.insert(1, os.path.join(os.path.dirname(__file__),'vendor'))
+vendor_path = os.path.join(os.path.dirname(__file__), 'vendor')
+if vendor_path not in sys.path:
+    sys.path.append(vendor_path)
 
 # Configure feed parser
 import feedparser
 feedparser.SANITIZE_HTML=1
 feedparser.RESOLVE_RELATIVE_URIS=0
-
-import publish

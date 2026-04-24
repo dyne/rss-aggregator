@@ -18,9 +18,9 @@
 #   sidebar = @class='sidebar'
 #
 
-import glob, libxml2, os, time, sys, sgmllib, urllib2, urlparse, re
+import glob, libxml2, os, time, sys, sgmllib, urllib.request, urllib.error, urllib.parse, urllib.parse, re
 from xml.sax.saxutils import escape
-from htmlentitydefs import entitydefs
+from html.entities import entitydefs
 
 try:
   from hashlib import md5
@@ -74,7 +74,7 @@ urlmap = {}
 revmap = {}
 def canonicalize(url):
   url = urlmap.get(url,url)
-  parts = list(urlparse.urlparse(url))
+  parts = list(urllib.parse.urlparse(url))
 
   parts[0] = parts[0].lower()
   parts[1] = parts[1].lower()
@@ -82,7 +82,7 @@ def canonicalize(url):
   if not parts[2]: parts[2] = '/'
   parts[-1] = ''
   
-  canonurl = urlparse.urlunparse(parts)
+  canonurl = urllib.parse.urlunparse(parts)
   revmap[canonurl] = url
   return canonurl
   
@@ -137,7 +137,7 @@ for name in glob.glob(os.path.join(cache, '*')):
 
   # track the feed_links
   if author:
-    if not feed_links.has_key(author): feed_links[author] = list()
+    if author not in feed_links: feed_links[author] = list()
     feed_links[author].append([mtime, entry, title])
 
   # identify the unique links
@@ -219,20 +219,20 @@ class html(sgmllib.SGMLParser):
 
     try:
         # fetch the page
-        request = urllib2.Request(url)
+        request = urllib.request.Request(url)
         request.add_header('User-Agent', 'Venus/MeMeme')
-        if headers.has_key('etag'):
+        if 'etag' in headers:
             request.add_header('If-None-Match', headers['etag'])
-        if headers.has_key('last_modified'):
+        if 'last_modified' in headers:
             request.add_header('If-Modified-Since', headers['last-modified'])
-        response = urllib2.urlopen(request)
+        response = urllib.request.urlopen(request)
         self.feed(response.read())
 
         # ensure the data is in utf-8
         try:
             self.title = self.title.decode('utf-8')
         except:
-            self.title = ''.join([unichr(cp1252.get(ord(c),ord(c)))
+            self.title = ''.join([chr(cp1252.get(ord(c),ord(c)))
                 for c in self.title.decode('iso-8859-1')])
 
         # cache the results
@@ -243,7 +243,7 @@ class html(sgmllib.SGMLParser):
         cache_meme(url, headers)
     except:
         self.feedurl = headers.get('feedurl')
-        if headers.has_key('title'):
+        if 'title' in headers:
            if isinstance(headers['title'],str):
                self.title=eval('u'+repr(headers['title']).replace('\\\\','\\'))
            else:
@@ -255,22 +255,22 @@ class html(sgmllib.SGMLParser):
         data = feedparser.parse(self.feedurl, etag=headers.get('etag'),
             modified=headers.get('last-modified'))
 
-        if data.has_key('headers') and data.has_key('status') and \
+        if 'headers' in data and 'status' in data and \
             data.status in [200, 301, 302]:
 
             titles = {}
             for entry in data.entries:
-                if entry.has_key('title_detail') and entry.has_key('link'):
+                if 'title_detail' in entry and 'link' in entry:
                     titles[entry.link] = entry.title_detail.value
                     if entry.title_detail.type == 'text/plain':
                         titles[entry.link] = escape(titles[entry.link])
 
-            if titles.has_key(url): self.title = titles[url]
+            if url in titles: self.title = titles[url]
 
             data.headers.update(titles)
             cache_meme(self.feedurl, data.headers)
         else:
-            if headers.has_key(url):
+            if url in headers:
                if isinstance(headers[url],str):
                    self.title=eval('u'+repr(headers[url]).replace('\\\\','\\'))
                else:
@@ -352,7 +352,7 @@ while child:
     while link.isText(): link=link.prev
     author = link.getContent()
     state = 'inactive'
-    if feed_links.has_key(author):
+    if author in feed_links:
       ul2 = child.newChild(None, 'ul', None)
       feed_links[author].sort()
       feed_links[author].reverse()
@@ -382,7 +382,7 @@ img.setProp('src', 'images/feed-icon-10x10.png')
 
 # collect the results
 log.debug("Fetch titles and collect the results")
-from urllib import quote_plus
+from urllib.parse import quote_plus
 for i in range(0,len(weighted_links)):
   weight, link, updated = weighted_links[i]
   if link in spam: continue
@@ -405,7 +405,7 @@ for i in range(0,len(weighted_links)):
   # when possible, take the title from the cache
   if os.path.exists(cache_file):
       entry = feedparser.parse(cache_file).entries[0]
-      if entry.has_key('title_detail'):
+      if 'title_detail' in entry:
         title = entry.title_detail.value
         if entry.title_detail.type == 'text/plain': title = escape(title)
 
@@ -417,12 +417,12 @@ for i in range(0,len(weighted_links)):
   # dehtmlize
   title = re.sub('&(\w+);',
     lambda n: entitydefs.get(n.group(1), '&'+n.group(1)+';'), title)
-  title = re.sub('&#(\d+);',lambda n: unichr(int(n.group(1))), title)
-  title = re.sub('&#x(\w+);',lambda n: unichr(int(n.group(1),16)), title)
+  title = re.sub('&#(\d+);',lambda n: chr(int(n.group(1))), title)
+  title = re.sub('&#x(\w+);',lambda n: chr(int(n.group(1),16)), title)
 
   # title too long?  Insert zero width spaces where appropriate
   if len(title.strip())>0 and max(map(len,title.split())) > 30:
-    title=re.sub('(\W+)',u'\\1\u200b',title)
+    title=re.sub('(\W+)','\\1\u200b',title)
 
   # save the entry title (it is used later)
   entry_title = title.strip()
