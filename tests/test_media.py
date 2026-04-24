@@ -3,6 +3,7 @@
 import os
 import shutil
 import unittest
+from unittest import mock
 
 from planet import media
 
@@ -129,3 +130,36 @@ class MediaTest(unittest.TestCase):
         self.assertFalse(media.should_refresh_screenshot('http://example.com/', None))
         self.assertFalse(media.should_refresh_screenshot('http://example.com/', 'http://example.com/'))
         self.assertTrue(media.should_refresh_screenshot('http://example.net/', 'http://example.com/'))
+
+    def test_fetch_open_graph_image_returns_none_for_non_html(self):
+        response = mock.Mock()
+        response.headers.get.return_value = 'application/json'
+        with mock.patch('urllib.request.urlopen', return_value=response):
+            self.assertEqual(None, media.fetch_open_graph_image('http://example.com/data.json'))
+
+    def test_feed_screenshot_keeps_cache_for_unsupported_scheme(self):
+        with mock.patch.object(media, 'fetch_open_graph_image') as fetch:
+            self.assertEqual(
+                'http://example.com/cached.png',
+                media.feed_screenshot(
+                    {'links': [{'rel': 'alternate', 'href': 'ftp://example.com/feed'}]},
+                    cached='http://example.com/cached.png',
+                    cached_homepage='http://example.com/'))
+        fetch.assert_not_called()
+
+    def test_feed_screenshot_swallows_fetch_errors(self):
+        with mock.patch.object(media, 'fetch_open_graph_image', side_effect=OSError('boom')):
+            self.assertEqual(
+                'http://example.com/cached.png',
+                media.feed_screenshot(
+                    {'links': [{'rel': 'alternate', 'href': 'http://example.com/'}]},
+                    cached='http://example.com/cached.png',
+                    cached_homepage='http://example.net/'))
+
+        with mock.patch.object(media, 'fetch_open_graph_image', side_effect=ValueError('boom')):
+            self.assertEqual(
+                'http://example.com/cached.png',
+                media.feed_screenshot(
+                    {'links': [{'rel': 'alternate', 'href': 'http://example.com/'}]},
+                    cached='http://example.com/cached.png',
+                    cached_homepage='http://example.net/'))
