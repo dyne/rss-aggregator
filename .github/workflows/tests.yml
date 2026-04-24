@@ -23,8 +23,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: uv sync --locked
+      - name: Install optional system components
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-libxml2 xsltproc
+
+      - name: Create uv environment with system site packages
+        run: uv venv --python 3.12 --seed --system-site-packages .venv
+
+      - name: Install dependencies and extras
+        run: |
+          VIRTUAL_ENV="$PWD/.venv" PATH="$PWD/.venv/bin:$PATH" \
+          uv sync --active --locked --all-extras
 
       - name: Run tests
-        run: uv run python runtests.py
+        run: |
+          VIRTUAL_ENV="$PWD/.venv" PATH="$PWD/.venv/bin:$PATH" \
+          uv run --active python runtests.py
