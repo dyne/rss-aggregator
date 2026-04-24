@@ -47,3 +47,12 @@ class ReadingListTest(unittest.TestCase):
         feeds.sort()
         self.assertEqual(['opml.xml', 'testfeed0.atom', 'testfeed1a.atom',
             'testfeed2.atom', 'testfeed3.rss'], feeds)
+
+    def test_only_supported_reading_list_types_are_detected(self):
+        config.parser.add_section('http://example.com/custom')
+        config.parser.set('http://example.com/custom', 'content_type',
+            'custom.filter')
+        self.assertEqual(None,
+            config.reading_list_type('http://example.com/custom'))
+        self.assertTrue(
+            'http://example.com/custom' not in config.reading_lists())

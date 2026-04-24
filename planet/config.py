@@ -27,6 +27,7 @@ from . import output
 parser = ConfigParser()
 
 planet_predefined_options = ['filters']
+READING_LIST_TYPES = ('opml', 'csv', 'config')
 
 def __init__():
     """define the struture of an ini file"""
@@ -148,17 +149,16 @@ def load(config_files):
             os.makedirs(config.cache_lists_directory())
 
         def data2config(data, cached_config):
-            if content_type(list).find('opml')>=0:
+            list_type = reading_list_type(list)
+            if list_type == 'opml':
                 opml.opml2config(data, cached_config)
-            elif content_type(list).find('csv')>=0:
+            elif list_type == 'csv':
                 csv_config.csv2config(data, cached_config)
-            elif content_type(list).find('config')>=0:
+            elif list_type == 'config':
                 cached_config.read_file(data)
             else:
-                from planet import shell
-                import io
-                cached_config.read_file(io.StringIO(shell.run(
-                    content_type(list), data.getvalue(), mode="filter")))
+                raise ValueError("Unsupported reading list type: %s" %
+                    content_type(list))
 
             if cached_config.sections() in [[], [list]]: 
                 raise Exception
@@ -306,13 +306,19 @@ def reading_lists():
     """ list of lists of feed subscriptions """
     result = []
     for section in parser.sections():
-        if parser.has_option(section, 'content_type'):
-            type = parser.get(section, 'content_type')
-            if type.find('opml')>=0 or \
-               type.find('csv')>=0 or type.find('config')>=0 or \
-               type.find('.')>=0:
-                result.append(section)
+        if reading_list_type(section):
+            result.append(section)
     return result
+
+def reading_list_type(section):
+    """Return the supported reading-list type for one config section."""
+    if not parser.has_option(section, 'content_type'):
+        return None
+    type = parser.get(section, 'content_type')
+    for supported in READING_LIST_TYPES:
+        if type.find(supported) >= 0:
+            return supported
+    return None
 
 def filters(section=None):
     filters = []
