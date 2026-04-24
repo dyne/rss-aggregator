@@ -4,14 +4,14 @@ and write each as a set of entries in a cache directory.
 """
 
 # Standard library modules
-import time, calendar, re, os, urllib.parse
+import time, calendar, re, os, urllib.parse, urllib.request, urllib.error
 from xml.dom import minidom
 # Planet modules
 import planet
 from . import config, reconstitute, shell, scrub
 from planet import feedparser
 import socket
-from io import StringIO 
+from io import BytesIO, StringIO
 
 try:
   from hashlib import md5
@@ -57,7 +57,8 @@ def filename(directory, filename):
 
 def write(xdoc, out, mtime=None):
     """ write the document out to disk """
-    file = open(out,'w')
+    mode = isinstance(xdoc, bytes) and 'wb' or 'w'
+    file = open(out, mode)
     file.write(xdoc)
     file.close()
     if mtime: os.utime(out, (mtime, mtime))
@@ -226,7 +227,7 @@ def writeCache(feed_uri, feed_info, data):
 
         # apply any filters
         xdoc = reconstitute.reconstitute(data, entry)
-        output = xdoc.toxml().encode('utf-8')
+        output = xdoc.toxml()
         xdoc.unlink()
         for filter in config.filters(feed_uri):
             output = shell.run(filter, output, mode="filter")
@@ -242,7 +243,6 @@ def writeCache(feed_uri, feed_info, data):
         if index != None: 
             feedid = data.feed.get('id', data.feed.get('link',None))
             if feedid:
-                if type(feedid) == str: feedid = feedid.encode('utf-8')
                 index[filename('', entry.id)] = feedid
 
     if index: index.close()
@@ -287,14 +287,10 @@ def writeCache(feed_uri, feed_info, data):
     xdoc=minidom.parseString('''<feed xmlns:planet="%s"
       xmlns="http://www.w3.org/2005/Atom"/>\n''' % planet.xmlns)
     reconstitute.source(xdoc.documentElement,data.feed,data.bozo,data.version)
-    write(xdoc.toxml().encode('utf-8'), filename(sources, feed_uri))
+    write(xdoc.toxml(), filename(sources, feed_uri))
     xdoc.unlink()
 
 def httpThread(thread_index, input_queue, output_queue, log):
-    import httplib2
-    from http.client import BadStatusLine
-
-    h = httplib2.Http(config.http_cache_directory())
     uri, feed_info = input_queue.get(block=True)
     while uri:
         log.info("Fetching %s via %d", uri, thread_index)
@@ -306,7 +302,7 @@ def httpThread(thread_index, input_queue, output_queue, log):
             # map IRI => URI
             try:
                 if isinstance(uri,str):
-                    idna = uri.encode('idna')
+                    idna = uri.encode('idna').decode('ascii')
                 else:
                     idna = uri.decode('utf-8').encode('idna')
                 if idna != uri: log.info("IRI %s mapped to %s", uri, idna)
@@ -325,29 +321,38 @@ def httpThread(thread_index, input_queue, output_queue, log):
             headers['user-agent'] = 'venus'
 
             # issue request
-            (resp, content) = h.request(idna, 'GET', headers=headers)
+            request = urllib.request.Request(idna, headers=headers)
+            try:
+                response = urllib.request.urlopen(request)
+                content = response.read()
+                status = response.getcode()
+                response_headers = response.headers
+            except urllib.error.HTTPError as e:
+                content = e.read()
+                status = e.code
+                response_headers = e.headers
+
+            resp = feedparser.FeedParserDict({
+                'status': status,
+                'fromcache': False,
+            })
+            for key, value in response_headers.items():
+                resp[key.lower()] = value
 
             # unchanged detection
-            resp['-content-hash'] = md5(content or '').hexdigest()
+            resp['-content-hash'] = md5(content or b'').hexdigest()
             if resp.status == 200:
-                if resp.fromcache:
-                    resp.status = 304
-                elif 'planet_content_hash' in feed_info.feed and \
+                if 'planet_content_hash' in feed_info.feed and \
                     feed_info.feed['planet_content_hash'] == \
                     resp['-content-hash']:
                     resp.status = 304
 
             # build a file-like object
-            feed = StringIO(content) 
+            feed = BytesIO(content)
             setattr(feed, 'url', resp.get('content-location', uri))
             if 'content-encoding' in resp:
                 del resp['content-encoding']
             setattr(feed, 'headers', resp)
-        except BadStatusLine:
-            log.error("Bad Status Line received for %s via %d",
-                uri, thread_index)
-        except httplib2.HttpLib2Error as e:
-            log.error("HttpLib2Error: %s via %d", str(e), thread_index)
         except socket.error as e:
             if e.__class__.__name__.lower()=='timeout':
                 feed.headers['status'] = '408'
@@ -491,8 +496,8 @@ def spiderPlanet(only_if_new = False):
 
         time.sleep(0.1)
 
-        for index in threads.keys():
-            if not threads[index].isAlive():
+        for index in list(threads.keys()):
+            if not threads[index].is_alive():
                 del threads[index]
                 if not threads:
                     log.info("Finished threaded part of processing.")

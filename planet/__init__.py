@@ -40,3 +40,21 @@ if vendor_path not in sys.path:
 import feedparser
 feedparser.SANITIZE_HTML=1
 feedparser.RESOLVE_RELATIVE_URIS=0
+
+if not hasattr(feedparser, '_parse_date_iso8601'):
+    def _parse_date_iso8601(value):
+        """Parse the ISO-8601 dates Venus used from older feedparser."""
+        import datetime
+        if not value:
+            return None
+        value = value.replace('Z', '+00:00')
+        try:
+            parsed = datetime.datetime.fromisoformat(value)
+        except ValueError:
+            return None
+        if parsed.tzinfo:
+            parsed = parsed.astimezone(datetime.timezone.utc)
+        return parsed.timetuple()
+
+    feedparser._parse_date_iso8601 = _parse_date_iso8601
+    feedparser._parse_date_w3dtf = _parse_date_iso8601
