@@ -61,6 +61,17 @@ class OutputTest(unittest.TestCase):
             ('rss.xml', 'feed.json'),
             output.OUTPUT_FILE_NAMES)
 
+    def test_build_feed_model_centralizes_output_fields(self):
+        config.load(configfile)
+        feed = output.build_feed_model(self.feeddata)
+        self.assertEqual('test planet', feed['title'])
+        self.assertEqual('', feed['home_page_url'])
+        self.assertEqual(None, feed['feed_url'])
+        self.assertEqual(12, len(feed['items']))
+        self.assertEqual(
+            'tag:planet.intertwingly.net,2006:testfeed3/2',
+            feed['items'][0]['id'])
+
     def test_apply_serializes_entry_and_source_images(self):
         config.load(configfile)
         doc = (
@@ -108,3 +119,23 @@ class OutputTest(unittest.TestCase):
         self.assertEqual('http://example.com/post-1.jpg', feed['items'][0]['image'])
         self.assertEqual('http://example.org/source.png', feed['items'][1]['image'])
         self.assertEqual('http://example.org/source.png', feed['items'][1]['_source']['screenshot'])
+
+    def test_apply_writes_rss_metadata_with_dates_and_author(self):
+        config.load(configfile)
+        splice.apply(self.feeddata)
+
+        rss = minidom.parse(os.path.join(workdir, output.RSS_OUTPUT_NAME))
+        channel = rss.getElementsByTagName('channel')[0]
+        self.assertEqual(
+            'Sat, 14 Oct 2006 13:02:18 GMT',
+            channel.getElementsByTagName('lastBuildDate')[0].firstChild.nodeValue)
+        self.assertEqual(
+            'Anonymous Coward',
+            channel.getElementsByTagName('managingEditor')[0].firstChild.nodeValue)
+
+        first_item = rss.getElementsByTagName('item')[0]
+        self.assertEqual(
+            'Sat, 14 Oct 2006 13:02:18 GMT',
+            first_item.getElementsByTagName('pubDate')[0].firstChild.nodeValue)
+        guid = first_item.getElementsByTagName('guid')[0]
+        self.assertEqual('false', guid.getAttribute('isPermaLink'))
