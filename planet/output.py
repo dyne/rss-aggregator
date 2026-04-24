@@ -2,7 +2,7 @@
 
 import json
 import os
-import time
+import calendar
 import urllib.parse
 from email.utils import formatdate
 from xml.dom import minidom
@@ -158,59 +158,37 @@ def _enclosures(entry):
     ]
 
 
-def _rss_item_xml(entry):
-    parts = ["<item>"]
-    if entry["title"]:
-        parts.append(f"<title>{escape(entry['title'])}</title>")
-    link = _alternate_url(entry["links"])
-    if link:
-        parts.append(f"<link>{escape(link)}</link>")
-    if entry["id"]:
-        parts.append(f"<guid>{escape(entry['id'])}</guid>")
-    when = entry["published"] or entry["updated"]
-    if when:
-        try:
-            pub_ts = time.mktime(time.strptime(when, "%Y-%m-%dT%H:%M:%SZ"))
-            parts.append(f"<pubDate>{formatdate(pub_ts, usegmt=True)}</pubDate>")
-        except ValueError:
-            pass
-    if entry["summary"]:
-        parts.append(f"<description><![CDATA[{entry['summary']}]]></description>")
-    elif entry["content"]:
-        parts.append(f"<description><![CDATA[{entry['content']}]]></description>")
-    if entry["content"]:
-        parts.append(f"<content:encoded><![CDATA[{entry['content']}]]></content:encoded>")
-    author = entry.get("author") or {}
-    if author.get("email"):
-        parts.append(f"<author>{escape(author['email'])}</author>")
-    for category in entry["categories"]:
-        parts.append(f"<category>{escape(category)}</category>")
-    for enclosure in _enclosures(entry):
-        parts.append(
-            '<enclosure url="{url}" type="{type}" length="{length}" />'.format(
-                url=escape(enclosure["href"]),
-                type=escape(enclosure.get("type") or "application/octet-stream"),
-                length=escape(enclosure.get("length") or "0"),
-            )
-        )
-    if entry["screenshot"]:
-        parts.append(
-            f'<media:thumbnail url="{escape(entry["screenshot"])}" />'
-        )
-    source = entry["source"]
-    if source.get("title"):
-        parts.append(f"<planet:source_title>{escape(source['title'])}</planet:source_title>")
-    if source.get("id"):
-        parts.append(f"<planet:source_id>{escape(source['id'])}</planet:source_id>")
-    if source.get("screenshot"):
-        parts.append(
-            f"<planet:source_screenshot>{escape(source['screenshot'])}</planet:source_screenshot>"
-        )
-    parts.append("</item>")
-    return "".join(parts)
+def _format_rss_datetime(value):
+    """Format an ISO-like feed timestamp for RSS when possible."""
+    if not value:
+        return None
+    from planet import feedparser
+    parsed = feedparser._parse_date_w3dtf(value)
+    if not parsed:
+        parsed = feedparser._parse_date_iso8601(value)
+    if not parsed:
+        return None
+    return formatdate(calendar.timegm(parsed), usegmt=True)
+
+
+def _rss_author_text(author):
+    """Render one RSS author string from normalized author metadata."""
+    if not author:
+        return None
+    email = author.get("email")
+    name = author.get("name")
+    if email and name:
+        return "%s (%s)" % (email, name)
+    return email or name
+
+
+def _channel_description(feed):
+    """Return the best RSS channel description text."""
+    return feed.get("subtitle") or feed["title"]
 
 
 def _json_item(entry):
+    """Render one feed item as JSON Feed data."""
     source = entry["source"]
     attachments = []
     for enclosure in _enclosures(entry):
@@ -253,32 +231,88 @@ def _json_item(entry):
     return item
 
 
-def _feed_dict(doc):
+def _build_feed_dict(doc):
+    """Build the intermediate feed model shared by RSS and JSON serializers."""
     feed = doc.documentElement
-    entries = [_entry_dict(node) for node in _direct_children(feed, "entry")]
     title, _ = _content_payload(feed, "title")
     subtitle, _ = _content_payload(feed, "subtitle")
     links = _links(feed)
+    home = _alternate_url(links) or config.link()
     author = _author(feed)
+    entries = [_entry_dict(node) for node in _direct_children(feed, "entry")]
     return {
         "title": title or config.name(),
         "subtitle": subtitle,
+        "description": subtitle or title or config.name(),
         "updated": _element_text(feed, "updated"),
         "links": links,
+        "home_page_url": home,
+        "feed_url": home and urllib.parse.urljoin(home.rstrip("/") + "/", JSON_OUTPUT_NAME) or None,
         "author": author,
         "entries": entries,
+        "items": [_json_item(entry) for entry in entries],
     }
 
 
-def write_outputs(doc):
-    """Write the built-in output files to the configured output directory."""
+def build_feed_model(doc):
+    """Return the normalized aggregate feed model used by built-in outputs."""
     if isinstance(doc, bytes):
         doc = doc.decode("utf-8")
-    xdoc = minidom.parseString(doc)
-    feed = _feed_dict(xdoc)
-    output_dir = config.output_dir()
-    os.makedirs(output_dir, exist_ok=True)
+    return _build_feed_dict(minidom.parseString(doc))
 
+
+def _rss_item_xml(entry):
+    """Render one feed item as RSS item XML."""
+    parts = ["<item>"]
+    if entry["title"]:
+        parts.append(f"<title>{escape(entry['title'])}</title>")
+    link = _alternate_url(entry["links"])
+    if link:
+        parts.append(f"<link>{escape(link)}</link>")
+    if entry["id"]:
+        is_permalink = "true" if link and entry["id"] == link else "false"
+        parts.append(f'<guid isPermaLink="{is_permalink}">{escape(entry["id"])}</guid>')
+    pub_date = _format_rss_datetime(entry["published"] or entry["updated"])
+    if pub_date:
+        parts.append(f"<pubDate>{pub_date}</pubDate>")
+    if entry["summary"]:
+        parts.append(f"<description><![CDATA[{entry['summary']}]]></description>")
+    elif entry["content"]:
+        parts.append(f"<description><![CDATA[{entry['content']}]]></description>")
+    if entry["content"]:
+        parts.append(f"<content:encoded><![CDATA[{entry['content']}]]></content:encoded>")
+    author = _rss_author_text(entry.get("author") or {})
+    if author:
+        parts.append(f"<author>{escape(author)}</author>")
+    for category in entry["categories"]:
+        parts.append(f"<category>{escape(category)}</category>")
+    for enclosure in _enclosures(entry):
+        parts.append(
+            '<enclosure url="{url}" type="{type}" length="{length}" />'.format(
+                url=escape(enclosure["href"]),
+                type=escape(enclosure.get("type") or "application/octet-stream"),
+                length=escape(enclosure.get("length") or "0"),
+            )
+        )
+    if entry["screenshot"]:
+        parts.append(
+            f'<media:thumbnail url="{escape(entry["screenshot"])}" />'
+        )
+    source = entry["source"]
+    if source.get("title"):
+        parts.append(f"<planet:source_title>{escape(source['title'])}</planet:source_title>")
+    if source.get("id"):
+        parts.append(f"<planet:source_id>{escape(source['id'])}</planet:source_id>")
+    if source.get("screenshot"):
+        parts.append(
+            f"<planet:source_screenshot>{escape(source['screenshot'])}</planet:source_screenshot>"
+        )
+    parts.append("</item>")
+    return "".join(parts)
+
+
+def render_rss(feed):
+    """Render the intermediate feed model as RSS XML."""
     rss_parts = [
         '<?xml version="1.0" encoding="utf-8"?>',
         '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" '
@@ -287,36 +321,49 @@ def write_outputs(doc):
         "<channel>",
         f"<title>{escape(feed['title'])}</title>",
     ]
-    home = _alternate_url(feed["links"]) or config.link()
-    if home:
-        rss_parts.append(f"<link>{escape(home)}</link>")
-    if feed["subtitle"]:
-        rss_parts.append(f"<description>{escape(feed['subtitle'])}</description>")
-    else:
-        rss_parts.append(f"<description>{escape(feed['title'])}</description>")
+    if feed["home_page_url"]:
+        rss_parts.append(f"<link>{escape(feed['home_page_url'])}</link>")
+    rss_parts.append(f"<description>{escape(_channel_description(feed))}</description>")
+    last_build = _format_rss_datetime(feed.get("updated"))
+    if last_build:
+        rss_parts.append(f"<lastBuildDate>{last_build}</lastBuildDate>")
+    author = _rss_author_text(feed.get("author") or {})
+    if author:
+        rss_parts.append(f"<managingEditor>{escape(author)}</managingEditor>")
     for entry in feed["entries"]:
         rss_parts.append(_rss_item_xml(entry))
     rss_parts.extend(["</channel>", "</rss>"])
+    return "".join(rss_parts)
 
-    rss_path = os.path.join(output_dir, RSS_OUTPUT_NAME)
-    with open(rss_path, "w", encoding="utf-8") as handle:
-        handle.write("".join(rss_parts))
 
+def render_json(feed):
+    """Render the intermediate feed model as JSON Feed text."""
     json_feed = {
         "version": "https://jsonfeed.org/version/1.1",
         "title": feed["title"],
-        "home_page_url": home,
-        "feed_url": home and urllib.parse.urljoin(home.rstrip("/") + "/", JSON_OUTPUT_NAME) or None,
+        "home_page_url": feed["home_page_url"],
+        "feed_url": feed["feed_url"],
         "description": feed["subtitle"],
-        "items": [_json_item(entry) for entry in feed["entries"]],
+        "items": feed["items"],
     }
     if feed["author"] and (feed["author"].get("name") or feed["author"].get("uri")):
         json_feed["authors"] = [{
             "name": feed["author"].get("name"),
             "url": feed["author"].get("uri"),
         }]
+    return json.dumps(json_feed, indent=2, ensure_ascii=False) + "\n"
+
+
+def write_outputs(doc):
+    """Write the built-in output files to the configured output directory."""
+    feed = build_feed_model(doc)
+    output_dir = config.output_dir()
+    os.makedirs(output_dir, exist_ok=True)
+
+    rss_path = os.path.join(output_dir, RSS_OUTPUT_NAME)
+    with open(rss_path, "w", encoding="utf-8") as handle:
+        handle.write(render_rss(feed))
 
     json_path = os.path.join(output_dir, JSON_OUTPUT_NAME)
     with open(json_path, "w", encoding="utf-8") as handle:
-        json.dump(json_feed, handle, indent=2, ensure_ascii=False)
-        handle.write("\n")
+        handle.write(render_json(feed))
