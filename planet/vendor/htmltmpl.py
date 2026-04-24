@@ -45,13 +45,32 @@ import cgi          # for HTML escaping of variables
 import urllib.parse # for URL escaping of variables
 import pickle      # for template compilation
 import gettext
-import portalocker  # for locking
 
 StringType = str
 IntType = int
 LongType = int
 FloatType = float
 ListType = list
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
+
+LOCK_SH = 1
+LOCK_EX = 2
+
+def lock_file(file, mode):
+    """Lock a template cache file when the platform supports it."""
+    if not fcntl:
+        return
+    operation = mode == LOCK_SH and fcntl.LOCK_SH or fcntl.LOCK_EX
+    fcntl.flock(file.fileno(), operation)
+
+def unlock_file(file):
+    """Unlock a template cache file when the platform supports it."""
+    if fcntl:
+        fcntl.flock(file.fileno(), fcntl.LOCK_UN)
 
 INCLUDE_DIR = "inc"
 
@@ -270,7 +289,7 @@ class TemplateManager:
             file = None
             try:
                 file = open(filename, "rb")
-                portalocker.lock(file, portalocker.LOCK_SH)
+                lock_file(file, LOCK_SH)
                 precompiled = pickle.load(file)
             except IOError as xxx_todo_changeme:
                 (errno, errstr) = xxx_todo_changeme.args
@@ -287,7 +306,7 @@ class TemplateManager:
                 return precompiled
         finally:
             if file:
-                portalocker.unlock(file)
+                unlock_file(file)
                 file.close()
             if remove_bad and os.path.isfile(filename):
                 # X: We may lose the original exception here, raising OSError.
@@ -318,7 +337,7 @@ class TemplateManager:
             file = None
             try:
                 file = open(filename, "wb")   # may truncate existing file
-                portalocker.lock(file, portalocker.LOCK_EX)
+                lock_file(file, LOCK_EX)
                 BINARY = 1
                 READABLE = 0
                 if self._debug:
@@ -343,7 +362,7 @@ class TemplateManager:
                 self.DEB("SAVING PRECOMPILED")
         finally:
             if file:
-                portalocker.unlock(file)
+                unlock_file(file)
                 file.close()
             if remove_bad and os.path.isfile(filename):
                 # X: We may lose the original exception here, raising OSError.

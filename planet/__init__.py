@@ -15,12 +15,8 @@ def getLogger(level, format):
     global logger, loggerParms
     if logger and loggerParms == (level,format): return logger
 
-    try:
-        import logging
-        logging.basicConfig(format=format)
-    except:
-        import compat_logging as logging
-        logging.basicConfig(format=format)
+    import logging
+    logging.basicConfig(format=format)
 
     logger = logging.getLogger("planet.runner")
     logger.setLevel(logging.getLevelName(level))

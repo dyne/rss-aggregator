@@ -382,12 +382,7 @@ def spiderPlanet(only_if_new = False):
         socket.setdefaulttimeout(float(timeout))
         log.info("Socket timeout set to %d seconds", timeout)
     except:
-        try:
-            import timeoutsocket
-            timeoutsocket.setDefaultSocketTimeout(float(timeout))
-            log.info("Socket timeout set to %d seconds", timeout)
-        except:
-            log.warning("Timeout set to invalid value '%s', skipping", timeout)
+        log.warning("Timeout set to invalid value '%s', skipping", timeout)
 
     from queue import Queue
     from threading import Thread
