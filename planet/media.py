@@ -78,54 +78,98 @@ def feed_homepage(feed):
     return feed.get("link")
 
 
-def feed_screenshot(feed, cached=None):
-    """Choose the best available source screenshot URL."""
-    if feed.get("planet_screenshot"):
-        return feed.get("planet_screenshot")
-    if cached:
-        return cached
-    if feed.get("logo"):
-        return feed.get("logo")
-    if feed.get("icon"):
-        return feed.get("icon")
-    if "image" in feed and feed.image.get("href"):
-        return feed.image.get("href")
+def source_screenshot(source):
+    """Return the best source-level screenshot candidate already in hand."""
+    if not source:
+        return None
+    if source.get("planet_screenshot"):
+        return source.get("planet_screenshot")
+    if source.get("logo"):
+        return source.get("logo")
+    if source.get("icon"):
+        return source.get("icon")
+    if "image" in source and source.image.get("href"):
+        return source.image.get("href")
+    return None
+
+
+def should_refresh_screenshot(homepage, cached_homepage):
+    """Return True when homepage-derived screenshot metadata should refresh."""
+    if not homepage or not cached_homepage:
+        return False
+    return homepage != cached_homepage
+
+
+def feed_screenshot(feed, cached=None, cached_homepage=None):
+    """Choose the best available source screenshot URL.
+
+    Feed-declared image metadata wins over cache. Homepage-derived cached
+    screenshots are reused until the feed homepage changes.
+    """
+    declared = source_screenshot(feed)
+    if declared:
+        return declared
 
     homepage = feed_homepage(feed)
+    if cached and not should_refresh_screenshot(homepage, cached_homepage):
+        return cached
+
     if not homepage:
-        return None
+        return cached
     if urllib.parse.urlparse(homepage).scheme not in ("http", "https", "file"):
-        return None
+        return cached
 
     try:
-        return fetch_open_graph_image(homepage)
+        screenshot = fetch_open_graph_image(homepage)
+        return screenshot or cached
     except OSError:
-        return None
+        return cached
     except ValueError:
-        return None
+        return cached
 
 
-def entry_screenshot(entry, source=None):
-    """Choose the best image for one entry, falling back to its source."""
+def entry_image_from_enclosures(entry):
+    """Return the first image enclosure URL for one entry."""
     for link in entry.get("links", []):
         href = link.get("href")
         if not href:
             continue
         if link.get("rel") == "enclosure" and looks_like_image(href, link.get("type")):
             return href
+    return None
 
+
+def entry_image_from_html(entry):
+    """Return the first inline HTML image URL for one entry."""
     for detail_name in ("content_detail", "summary_detail", "title_detail"):
         detail = entry.get(detail_name)
         if detail and detail.get("value"):
             image = first_image_from_html(detail.get("value"), detail.get("base"))
             if image:
                 return image
-
-    if source:
-        return (
-            source.get("planet_screenshot")
-            or source.get("logo")
-            or source.get("icon")
-            or None
-        )
     return None
+
+
+def source_fallback_screenshot(source):
+    """Return the source screenshot used when an entry has no item image."""
+    if not source:
+        return None
+    return (
+        source.get("planet_screenshot")
+        or source.get("logo")
+        or source.get("icon")
+        or None
+    )
+
+
+def entry_screenshot(entry, source=None):
+    """Choose the best image for one entry.
+
+    The precedence is fixed and tested: image enclosure, first inline HTML
+    image from content/summary/title, then the source-level screenshot.
+    """
+    return (
+        entry_image_from_enclosures(entry)
+        or entry_image_from_html(entry)
+        or source_fallback_screenshot(source)
+    )

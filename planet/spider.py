@@ -164,8 +164,15 @@ def writeCache(feed_uri, feed_info, data):
     for name, value in config.feed_options(feed_uri).items():
         data.feed['planet_'+name] = value
 
+    homepage = media.feed_homepage(data.feed)
     data.feed['planet_screenshot'] = media.feed_screenshot(
-        data.feed, feed_info.feed.get('planet_screenshot', None))
+        data.feed,
+        feed_info.feed.get('planet_screenshot', None),
+        feed_info.feed.get('planet_screenshot_homepage', None))
+    if homepage:
+        data.feed['planet_screenshot_homepage'] = homepage
+    elif 'planet_screenshot_homepage' in data.feed:
+        del data.feed['planet_screenshot_homepage']
 
     # perform user configured scrub operations on the data
     scrub.scrub(feed_uri, data)
