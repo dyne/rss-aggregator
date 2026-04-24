@@ -7,7 +7,7 @@ import unittest
 import urllib.parse
 
 import planet
-from planet import publish
+from planet import output, publish
 
 class PublishTest(unittest.TestCase):
 
@@ -33,8 +33,8 @@ class PublishTest(unittest.TestCase):
             handle.write(name)
 
     def test_publish_posts_configured_feeds(self):
-        self.touch('rss.xml')
-        self.touch('feed.json')
+        self.touch(output.RSS_OUTPUT_NAME)
+        self.touch(output.JSON_OUTPUT_NAME)
 
         publish.publish(FakeConfig(self.output))
 
@@ -46,7 +46,7 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(['http://planet.example/rss.xml'], data['hub.url'])
 
     def test_publish_skips_when_no_matching_feeds(self):
-        self.touch('feed.json')
+        self.touch(output.JSON_OUTPUT_NAME)
         publish.publish(FakeConfig(self.output))
         self.assertEqual([], self.requests)
 
@@ -64,4 +64,4 @@ class FakeConfig:
         return self.output
 
     def pubsubhubbub_feeds(self):
-        return ['rss.xml']
+        return [output.RSS_OUTPUT_NAME]

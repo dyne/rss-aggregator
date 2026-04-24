@@ -6,7 +6,7 @@ import shutil
 import unittest
 from xml.dom import minidom
 
-from planet import config, splice
+from planet import config, output, splice
 
 workdir = 'tests/work/apply'
 configfile = 'tests/data/apply/config-asf.ini'
@@ -32,8 +32,8 @@ class OutputTest(unittest.TestCase):
         config.load(configfile)
         splice.apply(self.feeddata)
 
-        rss_path = os.path.join(workdir, 'rss.xml')
-        json_path = os.path.join(workdir, 'feed.json')
+        rss_path = os.path.join(workdir, output.RSS_OUTPUT_NAME)
+        json_path = os.path.join(workdir, output.JSON_OUTPUT_NAME)
 
         self.assertTrue(os.path.exists(rss_path))
         self.assertTrue(os.path.exists(json_path))
@@ -53,3 +53,10 @@ class OutputTest(unittest.TestCase):
             feed['items'][0]['id'])
         self.assertEqual('Sam Ruby',
             feed['items'][0]['_source']['title'])
+
+    def test_output_names_are_fixed_constants(self):
+        self.assertEqual('rss.xml', output.RSS_OUTPUT_NAME)
+        self.assertEqual('feed.json', output.JSON_OUTPUT_NAME)
+        self.assertEqual(
+            ('rss.xml', 'feed.json'),
+            output.OUTPUT_FILE_NAMES)

@@ -10,6 +10,10 @@ from xml.sax.saxutils import escape
 
 from . import config, media
 
+RSS_OUTPUT_NAME = "rss.xml"
+JSON_OUTPUT_NAME = "feed.json"
+OUTPUT_FILE_NAMES = (RSS_OUTPUT_NAME, JSON_OUTPUT_NAME)
+
 
 def _direct_children(node, name):
     return [
@@ -267,7 +271,7 @@ def _feed_dict(doc):
 
 
 def write_outputs(doc):
-    """Write `rss.xml` and `feed.json` to the configured output directory."""
+    """Write the built-in output files to the configured output directory."""
     if isinstance(doc, bytes):
         doc = doc.decode("utf-8")
     xdoc = minidom.parseString(doc)
@@ -294,7 +298,7 @@ def write_outputs(doc):
         rss_parts.append(_rss_item_xml(entry))
     rss_parts.extend(["</channel>", "</rss>"])
 
-    rss_path = os.path.join(output_dir, "rss.xml")
+    rss_path = os.path.join(output_dir, RSS_OUTPUT_NAME)
     with open(rss_path, "w", encoding="utf-8") as handle:
         handle.write("".join(rss_parts))
 
@@ -302,7 +306,7 @@ def write_outputs(doc):
         "version": "https://jsonfeed.org/version/1.1",
         "title": feed["title"],
         "home_page_url": home,
-        "feed_url": home and urllib.parse.urljoin(home.rstrip("/") + "/", "feed.json") or None,
+        "feed_url": home and urllib.parse.urljoin(home.rstrip("/") + "/", JSON_OUTPUT_NAME) or None,
         "description": feed["subtitle"],
         "items": [_json_item(entry) for entry in feed["entries"]],
     }
@@ -312,7 +316,7 @@ def write_outputs(doc):
             "url": feed["author"].get("uri"),
         }]
 
-    json_path = os.path.join(output_dir, "feed.json")
+    json_path = os.path.join(output_dir, JSON_OUTPUT_NAME)
     with open(json_path, "w", encoding="utf-8") as handle:
         json.dump(json_feed, handle, indent=2, ensure_ascii=False)
         handle.write("\n")

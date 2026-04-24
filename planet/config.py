@@ -22,6 +22,8 @@ import os, sys, re, urllib.request, urllib.parse, urllib.error
 from configparser import ConfigParser
 from urllib.parse import urljoin
 
+from . import output
+
 parser = ConfigParser()
 
 planet_predefined_options = ['filters']
@@ -97,7 +99,7 @@ def __init__():
     define_planet('output_dir', 'output')
     define_planet('spider_threads', 0) 
     define_planet('pubsubhubbub_hub', '')
-    define_planet_list('pubsubhubbub_feeds', 'rss.xml')
+    define_planet_list('pubsubhubbub_feeds', output.RSS_OUTPUT_NAME)
 
     define_planet_int('new_feed_items', 0) 
     define_planet_int('feed_timeout', 20)
@@ -286,7 +288,7 @@ def feed():
     if parser.has_option('Planet', 'feed'):
         return parser.get('Planet', 'feed')
     elif link():
-        return urljoin(link(), 'rss.xml')
+        return urljoin(link(), output.RSS_OUTPUT_NAME)
 
 def feedtype():
     if parser.has_option('Planet', 'feedtype'):
