@@ -8,7 +8,7 @@ import time, calendar, re, os, urllib.parse, urllib.request, urllib.error
 from xml.dom import minidom
 # Planet modules
 import planet
-from . import config, media, reconstitute, shell, scrub, storage
+from . import config, filtering, media, reconstitute, scrub, storage
 from planet import feedparser
 import socket
 from io import BytesIO, StringIO
@@ -242,9 +242,7 @@ def writeCache(feed_uri, feed_info, data):
         xdoc = reconstitute.reconstitute(data, entry)
         output = xdoc.toxml()
         xdoc.unlink()
-        for filter in config.filters(feed_uri):
-            output = shell.run(filter, output, mode="filter")
-            if not output: break
+        output = filtering.apply_filters(feed_uri, output)
         if not output:
           if os.path.exists(cache_file): os.remove(cache_file)
           storage.delete_entry(entry_key)
