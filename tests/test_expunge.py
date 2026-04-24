@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import unittest, os, glob, shutil, time
 from planet.spider import filename
-from planet import feedparser, config
+from planet import feedparser, config, storage
 from planet.expunge import expungeCache
 from xml.dom import minidom
 import planet
@@ -82,3 +82,54 @@ class ExpungeTest(unittest.TestCase):
             'bzr.mfd-consult.dk,2007,venus-expunge-test4,2') in files)
         self.assertTrue(os.path.join(workdir,
             'bzr.mfd-consult.dk,2007,venus-expunge-test4,3') in files)
+
+    def test_expunge_sqlite_cache(self):
+        config.load(configfile)
+
+        sources = config.cache_sources_directory()
+        for feed in (
+            'tests/data/expunge/testfeed3.atom',
+            'tests/data/expunge/testfeed4.atom',
+        ):
+            document = minidom.parse(feed)
+            feed_id = document.getElementsByTagName('id')[0].childNodes[0].nodeValue
+            shutil.copyfile(feed, filename(sources, feed_id))
+
+        entries = [
+            ('tag:example.com,2026:feed3-new', 'tag:bzr.mfd-consult.dk,2007:venus-expunge-testfeed3', 300),
+            ('tag:example.com,2026:feed3-old', 'tag:bzr.mfd-consult.dk,2007:venus-expunge-testfeed3', 200),
+            ('tag:example.com,2026:feed4-newest', 'tag:bzr.mfd-consult.dk,2007:venus-expunge-testfeed4', 400),
+            ('tag:example.com,2026:feed4-newer', 'tag:bzr.mfd-consult.dk,2007:venus-expunge-testfeed4', 350),
+            ('tag:example.com,2026:feed4-old', 'tag:bzr.mfd-consult.dk,2007:venus-expunge-testfeed4', 250),
+            ('tag:example.com,2026:unsubbed', 'tag:bzr.mfd-consult.dk,2007:venus-expunge-unsubbed', 500),
+        ]
+
+        for entry_id, feed_id, updated_ts in entries:
+            entry_key = filename('', entry_id)
+            entry_xml = (
+                '<entry xmlns="http://www.w3.org/2005/Atom">'
+                f'<id>{entry_id}</id>'
+                '<updated>2026-04-24T12:00:00Z</updated>'
+                f'<source><id>{feed_id}</id></source>'
+                '</entry>'
+            )
+            storage.upsert_entry(entry_key, entry_id, feed_id, updated_ts, entry_xml)
+            with open(os.path.join(workdir, entry_key), 'w', encoding='utf-8') as handle:
+                handle.write(entry_xml)
+
+        self.assertEqual(6, storage.entries_count())
+
+        expungeCache()
+
+        remaining = [row[0] for row in storage.list_entries_by_recency()]
+        self.assertEqual(
+            [
+                filename('', 'tag:example.com,2026:feed4-newest'),
+                filename('', 'tag:example.com,2026:feed4-newer'),
+                filename('', 'tag:example.com,2026:feed3-new'),
+            ],
+            remaining,
+        )
+        self.assertFalse(os.path.exists(os.path.join(workdir, filename('', 'tag:example.com,2026:feed3-old'))))
+        self.assertFalse(os.path.exists(os.path.join(workdir, filename('', 'tag:example.com,2026:feed4-old'))))
+        self.assertFalse(os.path.exists(os.path.join(workdir, filename('', 'tag:example.com,2026:unsubbed'))))
