@@ -55,3 +55,11 @@ Never over-engineer. Challenge first ideas, weigh simpler alternatives, and
 choose the minimal viable implementation. Do not add dependencies unless asked;
 suggest them only when they clearly simplify the work. When planning, write
 Org files in `.gestalt/plans/` and do not commit `.gestalt` files.
+
+## Dependency Policy
+
+Prefer the Python standard library for small IO, HTTP, locking, and process
+wrappers. Use maintained PyPI packages for parser or security-sensitive code
+such as feed and HTML parsing. Do not vendor dependencies unless upstream is
+unavailable and the code is small enough to audit locally; document the reason
+in `pyproject.toml` or `docs/`.
