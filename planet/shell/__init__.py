@@ -8,10 +8,10 @@ def run(template_file, doc, mode='template'):
     """ select a template module based on file extension and execute it """
     log = planet.logger
 
-    if mode == 'template':
-        dirs = planet.config.template_directories()
-    else:
-        dirs = planet.config.filter_directories()
+    if mode != 'filter':
+        log.error("Template mode is no longer supported")
+        return
+    dirs = planet.config.filter_directories()
  
     # parse out "extra" options
     if template_file.find('?') < 0:
@@ -53,15 +53,9 @@ def run(template_file, doc, mode='template'):
             mode, template_resolved, module_name, inst)
 
     # Execute the shell module
-    options = planet.config.template_options(template_file)
+    options = planet.config.filter_options(template_file)
     if module_name == 'plugin': options['__file__'] = template_file
     options.update(extra_options)
     log.debug("Processing %s %s using %s", mode,
         os.path.realpath(template_resolved), module_name)
-    if mode == 'filter':
-        return module.run(template_resolved, doc, None, options)
-    else:
-        output_dir = planet.config.output_dir()
-        output_file = os.path.join(output_dir, base)
-        module.run(template_resolved, doc, output_file, options)
-        return output_file
+    return module.run(template_resolved, doc, None, options)
