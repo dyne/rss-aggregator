@@ -8,7 +8,6 @@
   - [Architecture](venus.svg)
   - [Normalization](normalization.md)
   - [Filters](filters.md)
-  - [Administration interface](admin.md)
 - Other
   - [Migration from Planet 2.0](migration.md)
   - [Contributing](contributing.md)

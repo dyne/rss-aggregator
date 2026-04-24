@@ -13,7 +13,6 @@ class DocsTest(unittest.TestCase):
     def test_docs_are_markdown(self):
         docs = sorted(os.path.basename(doc) for doc in glob('docs/*.md'))
         self.assertEqual([
-            'admin.md',
             'config.md',
             'contributing.md',
             'etiquette.md',
