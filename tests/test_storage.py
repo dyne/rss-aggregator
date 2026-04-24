@@ -36,6 +36,14 @@ class StorageTest(unittest.TestCase):
             self.assertTrue("entries" in tables)
             self.assertTrue("feeds" in tables)
             self.assertTrue("reading_lists" in tables)
+            columns = {
+                row[1]
+                for row in conn.execute("PRAGMA table_info(entries)").fetchall()
+            }
+            self.assertEqual(
+                set(["entry_key", "entry_id", "feed_id", "updated_ts", "entry_xml"]),
+                columns,
+            )
         finally:
             conn.close()
 

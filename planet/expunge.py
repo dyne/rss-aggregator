@@ -35,7 +35,7 @@ def expungeCache():
     cache = config.cache_directory()
     sqlite_entries = storage.list_entries_by_recency()
     if sqlite_entries:
-        for entry_key, _entry_id, feed_id, _updated_ts, entry_xml, _blacklisted in sqlite_entries:
+        for entry_key, _entry_id, feed_id, _updated_ts, entry_xml in sqlite_entries:
             source_id = feed_id
             if not source_id:
                 try:

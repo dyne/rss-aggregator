@@ -49,8 +49,7 @@ def ensure_schema(conn):
             entry_id TEXT,
             feed_id TEXT,
             updated_ts INTEGER NOT NULL DEFAULT 0,
-            entry_xml TEXT,
-            blacklisted INTEGER NOT NULL DEFAULT 0
+            entry_xml TEXT
         );
 
         CREATE TABLE IF NOT EXISTS reading_lists (
@@ -156,22 +155,21 @@ def upsert_feed(feed_uri, feed_id, source_xml, updated_ts=None):
     conn.close()
 
 
-def upsert_entry(entry_key, entry_id, feed_id, updated_ts, entry_xml, blacklisted=0):
+def upsert_entry(entry_key, entry_id, feed_id, updated_ts, entry_xml):
     """Insert or update one cached entry row."""
     conn = connect(create=True)
     conn.execute(
         """
-        INSERT INTO entries(entry_key, entry_id, feed_id, updated_ts, entry_xml, blacklisted)
-        VALUES(?, ?, ?, ?, ?, ?)
+        INSERT INTO entries(entry_key, entry_id, feed_id, updated_ts, entry_xml)
+        VALUES(?, ?, ?, ?, ?)
         ON CONFLICT(entry_key)
         DO UPDATE SET
             entry_id = excluded.entry_id,
             feed_id = excluded.feed_id,
             updated_ts = excluded.updated_ts,
-            entry_xml = excluded.entry_xml,
-            blacklisted = excluded.blacklisted
+            entry_xml = excluded.entry_xml
         """,
-        (entry_key, entry_id, feed_id, int(updated_ts), entry_xml, int(bool(blacklisted))),
+        (entry_key, entry_id, feed_id, int(updated_ts), entry_xml),
     )
     conn.commit()
     conn.close()
@@ -187,19 +185,6 @@ def delete_entry(entry_key):
     conn.close()
 
 
-def mark_entry_blacklisted(entry_key, blacklisted=True):
-    """Mark an existing cached entry as blacklisted/unblacklisted."""
-    conn = connect(create=False)
-    if conn is None:
-        return
-    conn.execute(
-        "UPDATE entries SET blacklisted = ? WHERE entry_key = ?",
-        (int(bool(blacklisted)), entry_key),
-    )
-    conn.commit()
-    conn.close()
-
-
 def list_entries_by_recency():
     """Return cached entries ordered from newest to oldest."""
     conn = connect(create=False)
@@ -207,7 +192,7 @@ def list_entries_by_recency():
         return []
     rows = conn.execute(
         """
-        SELECT entry_key, entry_id, feed_id, updated_ts, entry_xml, blacklisted
+        SELECT entry_key, entry_id, feed_id, updated_ts, entry_xml
         FROM entries
         ORDER BY updated_ts DESC, entry_key DESC
         """
