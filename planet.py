@@ -62,25 +62,25 @@ def main(argv=None):
         else:
             config_file.append(arg)
 
-    from planet import config
+    from src import config
     config.load(config_file or 'config.ini')
 
     if verbose:
-        import planet
+        import src as planet
         planet.getLogger('DEBUG',config.log_format())
 
     if not offline:
-        from planet import spider
+        from src import spider
         try:
             spider.spiderPlanet(only_if_new=only_if_new)
         except Exception as e:
             print(e)
 
-    from planet import splice
+    from src import splice
     doc = splice.splice()
 
     if debug_splice:
-        from planet import logger
+        from src import logger
         logger.info('writing debug.atom')
         debug=open('debug.atom','w')
         try:
@@ -95,7 +95,7 @@ def main(argv=None):
     splice.apply(doc.toxml('utf-8'))
 
     if expunge:
-        from planet import expunge
+        from src import expunge
         expunge.expungeCache()
 
     return 0

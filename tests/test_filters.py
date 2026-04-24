@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import unittest, xml.dom.minidom
-from planet import config, filtering, logger
+from src import config, filtering, logger
 
 class FilterTests(unittest.TestCase):
 

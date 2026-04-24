@@ -162,7 +162,7 @@ def _format_rss_datetime(value):
     """Format an ISO-like feed timestamp for RSS when possible."""
     if not value:
         return None
-    from planet import feedparser
+    from src import feedparser
     parsed = feedparser._parse_date_w3dtf(value)
     if not parsed:
         parsed = feedparser._parse_date_iso8601(value)

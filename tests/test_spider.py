@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import unittest, os, glob, calendar, shutil, time, sqlite3
-from planet.spider import filename, spiderPlanet, writeCache
-from planet import feedparser, config
-import planet
+from src.spider import filename, spiderPlanet, writeCache
+from src import feedparser, config
+import src as planet
 
 workdir = 'tests/work/spider/cache'
 testfeed = 'tests/data/spider/testfeed%s.atom'

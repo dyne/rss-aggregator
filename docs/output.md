@@ -9,7 +9,7 @@ The aggregated RSS feed. This is the canonical syndication output.
 A JSON Feed style document for applications and downstream tooling. It includes item attachments, source metadata, and screenshots when available.
 
 No additional publish step runs after these files are written. A `planet.py`
-run finishes once the built-in outputs have been generated.
+or `rss-aggregator` run finishes once the built-in outputs have been generated.
 
 ### What metadata is preserved
 

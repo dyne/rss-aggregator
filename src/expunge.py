@@ -1,8 +1,9 @@
 """ Expunge old entries from a cache of entries """
-import glob, os, planet
+import glob, os
+import src as planet
 from xml.dom import minidom
 from . import config, storage
-from planet import feedparser
+from src import feedparser
 from .spider import filename
 
 def _source_id_from_doc(entry_doc):

@@ -18,7 +18,7 @@ from xml.sax.saxutils import escape
 from xml.dom import minidom, Node
 from html5lib import html5parser
 from html5lib import treebuilders
-import planet
+import src as planet
 from . import config
 
 try:

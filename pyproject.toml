@@ -3,9 +3,9 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "venus"
-version = "0.1.0"
-description = "Planet feed aggregator and static site generator"
+name = "rss-aggregator"
+version = "3.0.0"
+description = "RSS feed aggregator"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "AGPL-3.0-or-later"
@@ -17,6 +17,9 @@ dependencies = [
   "html5lib>=1.1,<2",
 ]
 
+[project.scripts]
+rss-aggregator = "planet:main"
+
 [dependency-groups]
 dev = [
   "pytest>=8,<9",
@@ -24,7 +27,8 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["planet", "planet.shell"]
+packages = ["src", "src.shell"]
+py-modules = ["planet"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

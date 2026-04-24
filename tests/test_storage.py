@@ -5,7 +5,7 @@ import shutil
 import sqlite3
 import unittest
 
-from planet import config, storage
+from src import config, storage
 
 
 WORKDIR = "tests/work/storage/cache"

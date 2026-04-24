@@ -6,7 +6,7 @@ import subprocess
 import textwrap
 from xml.dom import Node, minidom
 
-import planet
+import src as planet
 
 from . import config
 

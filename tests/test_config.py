@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 import unittest
-from planet import config
+from src import config
 
 class ConfigTest(unittest.TestCase):
     def tearDown(self):

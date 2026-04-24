@@ -2,8 +2,8 @@
 
 import unittest, io, time
 from copy import deepcopy
-from planet.scrub import scrub
-from planet import feedparser, config
+from src.scrub import scrub
+from src import feedparser, config
 
 feed = '''
 <feed xmlns='http://www.w3.org/2005/Atom' xml:base="http://example.com/">

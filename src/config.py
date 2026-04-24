@@ -138,7 +138,7 @@ def load(config_files):
     parser.read(config_files)
 
     from . import config as config_module
-    import planet
+    import src as planet
     log = planet.logger
     if not log:
         log = planet.getLogger(

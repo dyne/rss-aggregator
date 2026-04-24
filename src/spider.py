@@ -7,9 +7,9 @@ and write each as a set of entries in a cache directory.
 import time, calendar, re, os, urllib.parse, urllib.request, urllib.error
 from xml.dom import minidom
 # Planet modules
-import planet
+import src as planet
 from . import config, filtering, media, reconstitute, scrub, storage
-from planet import feedparser
+from src import feedparser
 import socket
 from io import BytesIO, StringIO
 
@@ -176,7 +176,7 @@ def writeCache(feed_uri, feed_info, data):
     # perform user configured scrub operations on the data
     scrub.scrub(feed_uri, data)
 
-    from planet import idindex
+    from src import idindex
     global index
     if index != None: index = idindex.open()
  

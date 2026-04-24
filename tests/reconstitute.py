@@ -4,7 +4,7 @@ venus_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0,venus_base)
 
 if __name__ == "__main__":
-    import planet
+    import src as planet
     planet.getLogger('WARN',None)
 
     hide_planet_ns = True
@@ -35,10 +35,10 @@ if __name__ == "__main__":
     for name, value in zip(sys.argv[2::2],sys.argv[3::2]):
         parser.set(sys.argv[1], name.lstrip('-'), value)
 
-    from planet import config
+    from src import config
     config.parser = parser
 
-    from planet import spider
+    from src import spider
     spider.spiderPlanet(only_if_new=False)
 
     import feedparser
@@ -54,7 +54,7 @@ if __name__ == "__main__":
             if 'email' in feed.author_detail:
                 config.parser.set('Planet','owner_email',feed.author_detail.email)
 
-    from planet import splice
+    from src import splice
     doc = splice.splice()
 
     sources = doc.getElementsByTagName('planet:source')

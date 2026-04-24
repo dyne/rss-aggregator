@@ -6,7 +6,7 @@ import shutil
 import unittest
 from xml.dom import minidom
 
-from planet import config, output, splice
+from src import config, output, splice
 
 workdir = 'tests/work/apply'
 configfile = 'tests/data/apply/config-asf.ini'

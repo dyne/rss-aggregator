@@ -3,9 +3,9 @@
 ## Project Structure & Module Organization
 
 Venus is a Python feed aggregator. `planet.py` is the only supported command
-entry point. Core implementation lives in `planet/`, with a minimal helper
-module in `planet/shell/` used only by the maintained built-in filter paths.
-Built-in output generation lives in `planet/output.py` and always writes
+entry point. Core implementation lives in `src/`, with a minimal helper
+module in `src/shell/` used only by the maintained built-in filter paths.
+Built-in output generation lives in `src/output.py` and always writes
 `rss.xml` plus `feed.json`. Tests are in `tests/`, with fixtures under
 `tests/data/`. User-facing documentation is Markdown in `docs/`, maintained
 filter helpers live in `filters/`, and sample configurations live in
@@ -16,8 +16,11 @@ filter helpers live in `filters/`, and sample configurations live in
 - `uv sync`: install locked Python 3 runtime dependencies from `uv.lock`.
 - `uv run pytest`: run the full maintained test suite.
 - `uv run pytest tests/test_scrub.py`: run one test module from `tests/`.
-- `uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml`:
+- `uv run pytest --cov=src --cov-report=term-missing --cov-report=xml`:
   generate local coverage reports.
+- `uv build`: build the sdist and wheel.
+- `uvx --from ./dist/rss_aggregator-3.0.0-py3-none-any.whl rss-aggregator --help`:
+  smoke-test the packaged console script.
 - `uv run python planet.py pathto/config.ini`: run the aggregator with a local
   configuration.
 
@@ -41,10 +44,10 @@ beside related coverage in `tests/`, and put reusable fixtures in `tests/data/`.
 Name new test modules `test_<feature>.py` so pytest discovers them
 automatically. For code changes, run the touched test module first, then
 `uv run pytest` before handing off. When coverage matters, use
-`uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml`.
+`uv run pytest --cov=src --cov-report=term-missing --cov-report=xml`.
 For incremental coverage work, start with deterministic modules such as
-`planet/storage.py`, `planet/output.py`, `planet/media.py`, `planet/expunge.py`,
-and `planet/config.py` before broader stateful paths like `planet/spider.py`.
+`src/storage.py`, `src/output.py`, `src/media.py`, `src/expunge.py`,
+and `src/config.py` before broader stateful paths like `src/spider.py`.
 
 ## Commit & Pull Request Guidelines
 
