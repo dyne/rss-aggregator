@@ -60,3 +60,51 @@ class OutputTest(unittest.TestCase):
         self.assertEqual(
             ('rss.xml', 'feed.json'),
             output.OUTPUT_FILE_NAMES)
+
+    def test_apply_serializes_entry_and_source_images(self):
+        config.load(configfile)
+        doc = (
+            '<feed xmlns="http://www.w3.org/2005/Atom" '
+            'xmlns:planet="http://planet.intertwingly.net/">'
+            '<title>Media Planet</title>'
+            '<link rel="alternate" href="http://planet.example/" />'
+            '<entry>'
+            '<id>tag:example.com,2026:1</id>'
+            '<title>With enclosure</title>'
+            '<updated>2026-04-24T12:00:00Z</updated>'
+            '<link rel="alternate" href="http://example.com/post-1" />'
+            '<link rel="enclosure" href="http://example.com/post-1.jpg" type="image/jpeg" length="12" />'
+            '<source>'
+            '<title>Feed One</title>'
+            '<link rel="alternate" href="http://example.com/" />'
+            '<planet:screenshot>http://example.com/source.png</planet:screenshot>'
+            '</source>'
+            '</entry>'
+            '<entry>'
+            '<id>tag:example.com,2026:2</id>'
+            '<title>Source fallback</title>'
+            '<updated>2026-04-24T11:00:00Z</updated>'
+            '<link rel="alternate" href="http://example.com/post-2" />'
+            '<source>'
+            '<title>Feed Two</title>'
+            '<link rel="alternate" href="http://example.org/" />'
+            '<planet:screenshot>http://example.org/source.png</planet:screenshot>'
+            '</source>'
+            '</entry>'
+            '</feed>'
+        )
+
+        splice.apply(doc)
+
+        rss = minidom.parse(os.path.join(workdir, output.RSS_OUTPUT_NAME))
+        thumbnails = rss.getElementsByTagName('media:thumbnail')
+        self.assertEqual(
+            ['http://example.com/post-1.jpg', 'http://example.org/source.png'],
+            [node.getAttribute('url') for node in thumbnails])
+
+        with open(os.path.join(workdir, output.JSON_OUTPUT_NAME), encoding='utf-8') as handle:
+            feed = json.load(handle)
+
+        self.assertEqual('http://example.com/post-1.jpg', feed['items'][0]['image'])
+        self.assertEqual('http://example.org/source.png', feed['items'][1]['image'])
+        self.assertEqual('http://example.org/source.png', feed['items'][1]['_source']['screenshot'])

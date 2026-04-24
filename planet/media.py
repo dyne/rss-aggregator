@@ -82,6 +82,8 @@ def source_screenshot(source):
     """Return the best source-level screenshot candidate already in hand."""
     if not source:
         return None
+    if source.get("screenshot"):
+        return source.get("screenshot")
     if source.get("planet_screenshot"):
         return source.get("planet_screenshot")
     if source.get("logo"):
@@ -155,7 +157,8 @@ def source_fallback_screenshot(source):
     if not source:
         return None
     return (
-        source.get("planet_screenshot")
+        source.get("screenshot")
+        or source.get("planet_screenshot")
         or source.get("logo")
         or source.get("icon")
         or None
