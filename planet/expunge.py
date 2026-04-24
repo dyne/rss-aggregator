@@ -41,7 +41,12 @@ def expungeCache():
                 try:
                     source_id = _source_id_from_doc(minidom.parseString(entry_xml))
                 except:
-                    source_id = None
+                    log.debug("Skipping %s, entry XML could not be parsed", entry_key)
+                    continue
+
+            if not source_id:
+                log.debug("Skipping %s, no source id found", entry_key)
+                continue
 
             if source_id in entry_count:
                 entry_count[source_id] = entry_count[source_id] - 1
