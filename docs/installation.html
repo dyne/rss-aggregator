@@ -16,14 +16,12 @@
 <p>Install the locked Python dependencies from the checkout with uv:</p>
 <blockquote><pre>uv sync</pre></blockquote>
 
-<p>Some optional features require additional libraries or system tools:</p>
+<p>The maintained runtime does not require optional template engines.  The only
+commonly needed extra tool is for XSLT-based filters:</p>
 <ul>
-<li>Usage of XSLT requires either
+<li>Usage of XSLT filters requires either
 <a href="http://xmlsoft.org/XSLT/xsltproc2.html">xsltproc</a>
 or <a href="http://xmlsoft.org/XSLT/python.html">python-libxslt</a>.</li>
-<li>Django and Genshi template filters require their corresponding Python
-packages. Install them with <code>uv sync --extra django</code> or
-<code>uv sync --extra genshi</code>.</li>
 </ul>
 
 <h3>General Instructions</h3>
@@ -55,7 +53,8 @@ and put it wherever you like; I like to use the Planet's name (so
 <li><p>Edit the <code>config.ini</code> file in this directory to taste,
 it's pretty well documented so you shouldn't have any problems here.  Pay
 particular attention to the <code>output_dir</code> option, which should be
-readable by your web server.  If the directory you specify in your
+readable by your web server.  Venus will write <code>rss.xml</code> and
+<code>feed.json</code> there.  If the directory you specify in your
 <code>cache_dir</code> exists; make sure that it is empty.</p></li>
 <li><p>Run it: <code>uv run python planet.py pathto/config.ini</code></p>
 <p>You'll want to add this to cron, make sure you run it from the
@@ -63,7 +62,7 @@ right directory.</p></li>
 <li><p>(Optional)</p>
 <p>Tell us about it! We'd love to link to you on planetplanet.org :-)</p></li>
 <li><p>(Optional)</p>
-<p>Build your own themes, templates, or filters!  And share!</p></li>
+<p>Build your own filters and share them.</p></li>
 </ol>
 
 </body>

@@ -8,34 +8,27 @@
 <title>Venus Migration</title>
 </head>
 <body>
-<h2>Migration from Planet 2.0</h2>
-<p>The intent is that existing Planet 2.0 users should be able to reuse
-their existing <code>config.ini</code> and <code>.tmpl</code> files,
-but the reality is that users will need to be aware of the following:</p>
+<h2>Migration from older Planet and Venus setups</h2>
+<p>Current Venus keeps the feed aggregation model, but simplifies the output
+surface.  Existing users should plan around the following changes:</p>
 <ul>
 <li>You will need to start over with a new cache directory as the format
 of the cache has changed dramatically.</li>
-<li>Existing <code>.tmpl</code> and <code>.ini</code> files should work,
-though some <a href="config.html">configuration</a> options (e.g.,
-<code>days_per_page</code>) have not yet been implemented</li>
+<li>Template and theme settings such as <code>output_theme</code>,
+<code>template_files</code>, and <code>template_directories</code> are gone.</li>
+<li>Venus now writes built-in <code>rss.xml</code> and
+<code>feed.json</code> files into <code>output_dir</code>.</li>
+<li>Old theme files, <code>.tmpl</code> files, and Django or Genshi output
+templates are no longer part of the maintained product.</li>
 <li>Venus now requires Python 3.9 or newer.</li>
-<li>To take advantage of all features, you should install the optional
-XML libraries described on
+<li>If you use XSLT-based filters, keep the optional XML libraries described on
 the <a href="installation.html">Installation</a> page.</li>
 </ul>
 
-<p>
-Common changes to config.ini include:
-</p>
-<ul>
- <li><p>Filename changes:</p>
-<pre>
-examples/fancy/index.html.tmpl => themes/classic_fancy/index.html.tmpl
-examples/atom.xml.tmpl         => themes/common/atom.xml.xslt
-examples/rss20.xml.tmpl        => themes/common/rss20.xml.tmpl
-examples/rss10.xml.tmpl        => themes/common/rss10.xml.tmpl
-examples/opml.xml.tmpl         => themes/common/opml.xml.xslt
-</pre></li>
-</ul>
+<p>When migrating a config, keep feed subscriptions, cache settings,
+normalization overrides, and filters.  Remove theme sections and any
+template-specific post-processing.  After that, review
+<a href="config.html">configuration</a> and
+<a href="output.html">output files</a> for the maintained behavior.</p>
 </body>
 </html>
