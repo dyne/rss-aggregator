@@ -8,7 +8,7 @@ import time, calendar, re, os, urllib.parse, urllib.request, urllib.error
 from xml.dom import minidom
 # Planet modules
 import planet
-from . import config, reconstitute, shell, scrub, storage
+from . import config, media, reconstitute, shell, scrub, storage
 from planet import feedparser
 import socket
 from io import BytesIO, StringIO
@@ -163,6 +163,9 @@ def writeCache(feed_uri, feed_info, data):
                 {'rel':'self', 'type':feedtype, 'href':feed_uri}))
     for name, value in config.feed_options(feed_uri).items():
         data.feed['planet_'+name] = value
+
+    data.feed['planet_screenshot'] = media.feed_screenshot(
+        data.feed, feed_info.feed.get('planet_screenshot', None))
 
     # perform user configured scrub operations on the data
     scrub.scrub(feed_uri, data)
