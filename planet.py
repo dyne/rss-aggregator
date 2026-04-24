@@ -14,30 +14,38 @@ __authors__ = [ "Scott James Remnant <scott@netsplit.com>",
 __license__ = "Python"
 
 
-import os, sys
+import os
+import sys
 
-if __name__ == "__main__":
+def _print_help():
+    """Print the supported CLI usage and exit."""
+    print("Usage: planet.py [options] [CONFIGFILE]")
+    print()
+    print("Options:")
+    print(" -v, --verbose       DEBUG level logging during update")
+    print(" -o, --offline       Update the Planet from the cache only")
+    print(" -h, --help          Display this help message and exit")
+    print(" -n, --only-if-new   Only spider new feeds")
+    print(" -x, --expunge       Expunge old entries from cache")
+    print(" -d, --debug-splice  Write debug.atom before output generation")
+
+
+def main(argv=None):
+    """Run the maintained planet CLI."""
+    if argv is None:
+        argv = sys.argv[1:]
+
     config_file = []
     offline = 0
     verbose = 0
     only_if_new = 0
     expunge = 0
     debug_splice = 0
-    no_publish = 0
 
-    for arg in sys.argv[1:]:
+    for arg in argv:
         if arg == "-h" or arg == "--help":
-            print("Usage: planet [options] [CONFIGFILE]")
-            print()
-            print("Options:")
-            print(" -v, --verbose       DEBUG level logging during update")
-            print(" -o, --offline       Update the Planet from the cache only")
-            print(" -h, --help          Display this help message and exit")
-            print(" -n, --only-if-new   Only spider new feeds")
-            print(" -x, --expunge       Expunge old entries from cache")
-            print(" --no-publish        Do not publish feeds using PubSubHubbub")
-            print()
-            sys.exit(0)
+            _print_help()
+            return 0
         elif arg == "-v" or arg == "--verbose":
             verbose = 1
         elif arg == "-o" or arg == "--offline":
@@ -48,11 +56,9 @@ if __name__ == "__main__":
             expunge = 1
         elif arg == "-d" or arg == "--debug-splice":
             debug_splice = 1
-        elif arg == "--no-publish":
-            no_publish = 1
         elif arg.startswith("-"):
             print("Unknown option:", arg, file=sys.stderr)
-            sys.exit(1)
+            return 1
         else:
             config_file.append(arg)
 
@@ -88,10 +94,12 @@ if __name__ == "__main__":
 
     splice.apply(doc.toxml('utf-8'))
 
-    if config.pubsubhubbub_hub() and not no_publish:
-        from planet import publish
-        publish.publish(config)
-
     if expunge:
         from planet import expunge
-        expunge.expungeCache
+        expunge.expungeCache()
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
