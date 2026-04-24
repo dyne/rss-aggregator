@@ -85,6 +85,15 @@ def __init__():
         setattr(config, name, lambda section, default=default:
             int(get(section,name,default)))
 
+    # define a boolean section-level variable
+    def define_tmpl_bool(name, default=False):
+        def value(section, default=default):
+            raw = get(section, name, default and 'true' or 'false')
+            if isinstance(raw, bool):
+                return raw
+            return str(raw).lower() in ('1', 'true', 'yes', 'on')
+        setattr(config, name, value)
+
     # planet wide options
     define_planet('name', "Unconfigured Planet")
     define_planet('link', '')
@@ -122,6 +131,9 @@ def __init__():
     define_tmpl('xml_base', '')
     define_tmpl('filter', None) 
     define_tmpl('exclude', None) 
+    define_tmpl_bool('excerpt', False)
+    define_tmpl('regexp', '')
+    define_tmpl('sed', '')
 
 def load(config_files):
     """ initialize and load a configuration"""
