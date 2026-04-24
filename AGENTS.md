@@ -2,14 +2,14 @@
 
 ## Project Structure & Module Organization
 
-Venus is a Python feed aggregator. Top-level scripts such as `planet.py`,
-`spider.py`, `publish.py`, and `expunge.py` are command entry points. Core
-implementation lives in `planet/`, with a minimal helper module in
-`planet/shell/` used only by the maintained built-in filter paths. Built-in
-output generation lives in `planet/output.py` and always writes `rss.xml` plus
-`feed.json`. Tests are in `tests/`, with fixtures under `tests/data/`.
-User-facing documentation is Markdown in `docs/`, maintained filter
-helpers live in `filters/`, and sample configurations live in `examples/`.
+Venus is a Python feed aggregator. `planet.py` is the only supported command
+entry point. Core implementation lives in `planet/`, with a minimal helper
+module in `planet/shell/` used only by the maintained built-in filter paths.
+Built-in output generation lives in `planet/output.py` and always writes
+`rss.xml` plus `feed.json`. Tests are in `tests/`, with fixtures under
+`tests/data/`. User-facing documentation is Markdown in `docs/`, maintained
+filter helpers live in `filters/`, and sample configurations live in
+`examples/`.
 
 ## Build, Test, and Development Commands
 

@@ -19,4 +19,3 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["planet", "planet.shell"]
-py-modules = ["admin_cb", "expunge", "favicon", "publish", "spider", "splice"]
