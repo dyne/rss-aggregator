@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import unittest, os, sys, glob, re, io, time
-from planet import feedparser
-from planet.reconstitute import reconstitute
-from planet.scrub import scrub
+from src import feedparser
+from src.reconstitute import reconstitute
+from src.scrub import scrub
 
 testfiles = 'tests/data/reconstitute/%s.xml'
 

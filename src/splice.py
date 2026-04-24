@@ -1,16 +1,15 @@
 """Splice together a planet from a cache of feed entries."""
 import glob, os, time
 from xml.dom import minidom
-import planet
+import src as planet
 from . import config, output, reconstitute, storage
-from planet import feedparser
+from src import feedparser
 from .reconstitute import createTextElement, date
 from .spider import filename
-from planet import idindex
+from src import idindex
 
 def splice():
     """ Splice together a planet from a cache of entries """
-    import planet
     log = planet.logger
 
     log.info("Loading cached data")

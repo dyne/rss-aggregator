@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import unittest, os, glob, shutil, time
-from planet.spider import filename
-from planet import feedparser, config, storage
-from planet.expunge import expungeCache
+from src.spider import filename
+from src import feedparser, config, storage
+from src.expunge import expungeCache
 from xml.dom import minidom
-import planet
+import src as planet
 
 workdir = 'tests/work/expunge/cache'
 sourcesdir = 'tests/work/expunge/cache/sources'

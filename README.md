@@ -23,17 +23,25 @@ Run the test suite with:
 ```
 Generate a coverage report with:
 ```
-  uv run pytest --cov=planet --cov-report=term-missing --cov-report=xml
+  uv run pytest --cov=src --cov-report=term-missing --cov-report=xml
 ```
 Run the aggregator with:
 ```
   uv run python planet.py pathto/config.ini
 ```
 
-`planet.py` is the only supported CLI entrypoint. It reads one local INI
-configuration with direct feed sections, fetches feeds, writes `rss.xml` plus
-`feed.json`, and exits. The maintained runtime does not support hub publish,
-reading-list ingestion, or a separate moderation workflow.
+Build and smoke-test the packaged CLI with:
+```
+  uv build
+  uvx --from ./dist/rss_aggregator-3.0.0-py3-none-any.whl rss-aggregator --help
+```
+
+`planet.py` remains the maintained in-tree CLI entrypoint. Packaged installs
+also expose the same `main()` via the `rss-aggregator` console script. Both
+commands read one local INI configuration with direct feed sections, fetch
+feeds, write `rss.xml` plus `feed.json`, and exit. The maintained runtime does
+not support hub publish, reading-list ingestion, or a separate moderation
+workflow.
 
 To get started, check out the documentation in the docs directory.  If you have
 any questions or comments, please don't hesitate to use Github or our channels:

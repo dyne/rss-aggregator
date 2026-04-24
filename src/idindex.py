@@ -7,9 +7,9 @@ if __name__ == "__main__":
     rootdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, rootdir)
 
-from planet import config
-from planet import storage
-from planet.spider import filename
+from src import config
+from src import storage
+from src.spider import filename
 
 
 def _node_text(node):
@@ -42,7 +42,7 @@ def open():
     try:
         return storage.open_id_index(create=False)
     except Exception as error:
-        from planet import logger as log
+        from src import logger as log
 
         log.error(str(error))
         return None
@@ -50,7 +50,7 @@ def open():
 
 def destroy():
     """Remove id-index rows while keeping the shared cache database."""
-    from planet import logger as log
+    from src import logger as log
 
     storage.clear_id_index()
     log.info("id index deleted")
@@ -58,7 +58,7 @@ def destroy():
 
 def create():
     """Create (or rebuild) the id index by scanning cached entry files."""
-    from planet import logger as log
+    from src import logger as log
 
     index = storage.open_id_index(create=True)
     index.clear()
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     elif len(sys.argv) > 2 and sys.argv[2] == "-d":
         destroy()
     else:
-        from planet import logger as log
+        from src import logger as log
 
         index = open()
         if index:

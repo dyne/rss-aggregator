@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import unittest
-from planet.splice import splice, config
+from src.splice import splice, config
 
 configfile = 'tests/data/splice/config.ini'
 

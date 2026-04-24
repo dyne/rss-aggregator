@@ -2,8 +2,9 @@
 
 import os
 import shutil
-import unittest, planet
-from planet import idindex, config
+import unittest
+import src as planet
+from src import idindex, config
 
 class idIndexTest(unittest.TestCase):
 
@@ -24,7 +25,7 @@ class idIndexTest(unittest.TestCase):
         planet.logger = self.original_logger
 
     def test_unicode(self):
-        from planet.spider import filename
+        from src.spider import filename
         index = idindex.create()
         iri = b'http://www.\xe8\xa9\xb9\xe5\xa7\x86\xe6\x96\xaf.com/'
         index[filename('', iri)] = 'data'
@@ -40,7 +41,7 @@ class idIndexTest(unittest.TestCase):
         self.assertEqual(0, len(index))
         index.close()
 
-        from planet.spider import spiderPlanet
+        from src.spider import spiderPlanet
         try:
             spiderPlanet()
 
@@ -68,7 +69,7 @@ class idIndexTest(unittest.TestCase):
             if value.find('testfeed2')>0: index[key] = value.swapcase()
         index.close()
 
-        from planet.splice import splice
+        from src.splice import splice
         doc = splice()
 
         self.assertEqual(8,len(doc.getElementsByTagName('entry')))

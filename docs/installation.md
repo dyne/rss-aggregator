@@ -8,12 +8,13 @@ Install the locked Python dependencies from the checkout with uv:
 
 >     uv sync
 
-The maintained runtime has one supported command, `planet.py`. It reads one
-local INI file, fetches feeds, writes `rss.xml` plus `feed.json`, and exits.
-List subscriptions directly in that file; the maintained runtime does not load
-OPML, CSV, or remote config sources. It does not require optional template
-engines or XSLT tooling. If you use the built-in `sed` cleanup option, make
-sure your system `sed` command is available.
+The maintained runtime supports the in-tree `planet.py` command and the
+packaged `rss-aggregator` console script. Both read one local INI file, fetch
+feeds, write `rss.xml` plus `feed.json`, and exit. List subscriptions directly
+in that file; the maintained runtime does not load OPML, CSV, or remote config
+sources. It does not require optional template engines or XSLT tooling. If you
+use the built-in `sed` cleanup option, make sure your system `sed` command is
+available.
 
 ### General Instructions
 
@@ -32,6 +33,11 @@ These instructions apply to any platform. Check the instructions below for more 
 4.  Edit the `config.ini` file in this directory to taste, it's pretty well documented so you shouldn't have any problems here. Pay particular attention to the `output_dir` option, which should be readable by your web server. Venus will write `rss.xml` and `feed.json` there. If the directory you specify in your `cache_dir` exists; make sure that it is empty.
 
 5.  Run it: `uv run python planet.py pathto/config.ini`
+
+    Or build and run the packaged command:
+
+    > `uv build`
+    > `uvx --from ./dist/rss_aggregator-3.0.0-py3-none-any.whl rss-aggregator pathto/config.ini`
 
     You'll want to add this to cron, make sure you run it from the right directory.
 

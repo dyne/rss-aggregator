@@ -5,7 +5,7 @@ import shutil
 import unittest
 from unittest import mock
 
-from planet import media
+from src import media
 
 
 WORKDIR = 'tests/work/media'
