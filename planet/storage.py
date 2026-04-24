@@ -127,6 +127,79 @@ def open_id_index(create=False):
     return IdIndexStore(conn)
 
 
+def clear_id_index():
+    """Remove all id-index rows while keeping the database and schema."""
+    conn = connect(create=False)
+    if conn is None:
+        return
+    conn.execute("DELETE FROM id_index")
+    conn.commit()
+    conn.close()
+
+
+def upsert_feed(feed_uri, feed_id, source_xml, updated_ts=None):
+    """Insert or update cached feed metadata."""
+    conn = connect(create=True)
+    conn.execute(
+        """
+        INSERT INTO feeds(feed_uri, feed_id, source_xml, updated_ts)
+        VALUES(?, ?, ?, ?)
+        ON CONFLICT(feed_uri)
+        DO UPDATE SET
+            feed_id = excluded.feed_id,
+            source_xml = excluded.source_xml,
+            updated_ts = excluded.updated_ts
+        """,
+        (feed_uri, feed_id, source_xml, int(updated_ts or time.time())),
+    )
+    conn.commit()
+    conn.close()
+
+
+def upsert_entry(entry_key, entry_id, feed_id, updated_ts, entry_xml, blacklisted=0):
+    """Insert or update one cached entry row."""
+    conn = connect(create=True)
+    conn.execute(
+        """
+        INSERT INTO entries(entry_key, entry_id, feed_id, updated_ts, entry_xml, blacklisted)
+        VALUES(?, ?, ?, ?, ?, ?)
+        ON CONFLICT(entry_key)
+        DO UPDATE SET
+            entry_id = excluded.entry_id,
+            feed_id = excluded.feed_id,
+            updated_ts = excluded.updated_ts,
+            entry_xml = excluded.entry_xml,
+            blacklisted = excluded.blacklisted
+        """,
+        (entry_key, entry_id, feed_id, int(updated_ts), entry_xml, int(bool(blacklisted))),
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_entry(entry_key):
+    """Delete one cached entry by key."""
+    conn = connect(create=False)
+    if conn is None:
+        return
+    conn.execute("DELETE FROM entries WHERE entry_key = ?", (entry_key,))
+    conn.commit()
+    conn.close()
+
+
+def mark_entry_blacklisted(entry_key, blacklisted=True):
+    """Mark an existing cached entry as blacklisted/unblacklisted."""
+    conn = connect(create=False)
+    if conn is None:
+        return
+    conn.execute(
+        "UPDATE entries SET blacklisted = ? WHERE entry_key = ?",
+        (int(bool(blacklisted)), entry_key),
+    )
+    conn.commit()
+    conn.close()
+
+
 def destroy_database():
     """Remove the SQLite cache database file if it exists."""
     path = database_path()

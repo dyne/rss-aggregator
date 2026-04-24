@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import unittest, os, glob, calendar, shutil, time
+import unittest, os, glob, calendar, shutil, time, sqlite3
 from planet.spider import filename, spiderPlanet, writeCache
 from planet import feedparser, config
 import planet
@@ -10,6 +10,10 @@ testfeed = 'tests/data/spider/testfeed%s.atom'
 configfile = 'tests/data/spider/config.ini'
 
 class SpiderTest(unittest.TestCase):
+    def cache_items(self):
+        return [path for path in glob.glob(workdir + "/*")
+            if os.path.basename(path) != "cache.sqlite3"]
+
     def setUp(self):
         # silence errors
         self.original_logger = planet.logger
@@ -50,7 +54,7 @@ class SpiderTest(unittest.TestCase):
         writeCache(feed_uri, feed_info, data)
 
     def verify_spiderFeed(self):
-        files = glob.glob(workdir+"/*")
+        files = self.cache_items()
         files.sort()
 
         # verify that exactly four files + one sources dir were produced
@@ -74,13 +78,28 @@ class SpiderTest(unittest.TestCase):
         self.spiderFeed(testfeed % '1b')
         self.verify_spiderFeed()
 
+    def test_spiderFeed_sqlite_cache(self):
+        config.load(configfile)
+        self.spiderFeed(testfeed % '1b')
+        db_path = os.path.join(workdir, "cache.sqlite3")
+        self.assertTrue(os.path.exists(db_path))
+
+        conn = sqlite3.connect(db_path)
+        try:
+            entries = conn.execute("SELECT COUNT(*) FROM entries").fetchone()[0]
+            feeds = conn.execute("SELECT COUNT(*) FROM feeds").fetchone()[0]
+            self.assertEqual(4, entries)
+            self.assertEqual(1, feeds)
+        finally:
+            conn.close()
+
     def test_spiderFeed_retroactive_filter(self):
         config.load(configfile)
         self.spiderFeed(testfeed % '1b')
-        self.assertEqual(5, len(glob.glob(workdir+"/*")))
+        self.assertEqual(5, len(self.cache_items()))
         config.parser.set('Planet', 'filter', 'two')
         self.spiderFeed(testfeed % '1b')
-        self.assertEqual(1, len(glob.glob(workdir+"/*")))
+        self.assertEqual(1, len(self.cache_items()))
 
     def test_spiderFeed_blacklist(self):
         config.load(configfile)
@@ -112,13 +131,13 @@ class SpiderTest(unittest.TestCase):
     def test_spiderFeedUpdatedEntries(self):
         config.load(configfile)
         self.spiderFeed(testfeed % '4')
-        self.assertEqual(2, len(glob.glob(workdir+"/*")))
+        self.assertEqual(2, len(self.cache_items()))
         data = feedparser.parse(workdir + 
             '/planet.intertwingly.net,2006,testfeed4')
         self.assertEqual('three', data.entries[0].content[0].value)
 
     def verify_spiderPlanet(self):
-        files = glob.glob(workdir+"/*")
+        files = self.cache_items()
 
         # verify that exactly eight files + 1 source dir were produced
         self.assertEqual(14, len(files))

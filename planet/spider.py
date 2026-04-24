@@ -8,7 +8,7 @@ import time, calendar, re, os, urllib.parse, urllib.request, urllib.error
 from xml.dom import minidom
 # Planet modules
 import planet
-from . import config, reconstitute, shell, scrub
+from . import config, reconstitute, shell, scrub, storage
 from planet import feedparser
 import socket
 from io import BytesIO, StringIO
@@ -193,12 +193,15 @@ def writeCache(feed_uri, feed_info, data):
     # write each entry to the cache
     cache = config.cache_directory()
     for updated, entry in ids.values():
+        entry_key = filename('', entry.id)
+        feedid = data.feed.get('id', data.feed.get('link', None))
 
         # compute blacklist file name based on the id
         blacklist_file = filename(blacklist, entry.id)  
 
         # check if blacklist file exists. If so, skip it. 
         if os.path.exists(blacklist_file):
+           storage.mark_entry_blacklisted(entry_key, True)
            continue
 
         # compute cache file name based on the id
@@ -234,16 +237,24 @@ def writeCache(feed_uri, feed_info, data):
             if not output: break
         if not output:
           if os.path.exists(cache_file): os.remove(cache_file)
+          storage.delete_entry(entry_key)
           continue
 
         # write out and timestamp the results
         write(output, cache_file, mtime) 
+        storage.upsert_entry(
+            entry_key=entry_key,
+            entry_id=entry.id,
+            feed_id=feedid,
+            updated_ts=mtime,
+            entry_xml=output,
+            blacklisted=0
+        )
     
         # optionally index
         if index != None: 
-            feedid = data.feed.get('id', data.feed.get('link',None))
             if feedid:
-                index[filename('', entry.id)] = feedid
+                index[entry_key] = feedid
 
     if index: index.close()
 
@@ -287,7 +298,13 @@ def writeCache(feed_uri, feed_info, data):
     xdoc=minidom.parseString('''<feed xmlns:planet="%s"
       xmlns="http://www.w3.org/2005/Atom"/>\n''' % planet.xmlns)
     reconstitute.source(xdoc.documentElement,data.feed,data.bozo,data.version)
-    write(xdoc.toxml(), filename(sources, feed_uri))
+    source_xml = xdoc.toxml()
+    write(source_xml, filename(sources, feed_uri))
+    storage.upsert_feed(
+        feed_uri=feed_uri,
+        feed_id=data.feed.get('id', data.feed.get('link', None)),
+        source_xml=source_xml
+    )
     xdoc.unlink()
 
 def httpThread(thread_index, input_queue, output_queue, log):
