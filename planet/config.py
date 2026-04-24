@@ -26,7 +26,7 @@ from . import output
 
 parser = ConfigParser(interpolation=None)
 
-planet_predefined_options = ['filters', 'excerpt', 'regexp', 'sed']
+planet_predefined_options = ['excerpt', 'regexp', 'sed']
 SED_FILTERS = {
     'feedburner': 'stripAd/feedburner.sed',
     'google_ad_map': 'stripAd/google_ad_map.sed',
@@ -121,8 +121,6 @@ def __init__():
     define_planet_int('cache_keep_entries', 10)
     define_planet_int('items_per_page', 60)
 
-    define_planet_list('filter_directories', 'filters')
-
     # section-level options still used by feeds and filters
     define_tmpl_int('activity_threshold', 0)
     define_tmpl('encoding', 'utf-8')
@@ -152,12 +150,6 @@ def load(config_files):
     log = planet.logger
     if not log:
         log = planet.getLogger(config.log_level(),config.log_format())
-
-    # Filter support
-    dirs = config.filter_directories()
-    filter_dir = os.path.join(sys.path[0],'filters')
-    if filter_dir not in dirs and os.path.exists(filter_dir):
-        parser.set('Planet', 'filter_directories', ' '.join(dirs+[filter_dir]))
 
     # Reading list support
     reading_lists = config.reading_lists()
@@ -316,7 +308,7 @@ def feedtype():
 def subscriptions():
     """ list the feed subscriptions """
     return list(__builtins__['filter'](lambda feed: feed!='Planet' and 
-        feed not in filters()+reading_lists(),
+        feed not in reading_lists(),
         parser.sections()))
 
 def reading_lists():
@@ -336,17 +328,6 @@ def reading_list_type(section):
         if type.find(supported) >= 0:
             return supported
     return None
-
-def filters(section=None):
-    filters = []
-    if regexp(section):
-        filters.append('regexp_sifter.py?require=' +
-            urllib.parse.quote(regexp(section)))
-    if sed(section):
-        filters.append(sed_filter(section))
-    if excerpt(section):
-        filters.append('excerpt.py')
-    return filters
 
 def sed_filter(section=None):
     """Return the maintained sed filter path for one section."""
@@ -370,10 +351,6 @@ def feed_options(section):
         options.update(dict(map(lambda opt: (opt, parser.get(section,opt)),
             parser.options(section))))
     return options
-
-def filter_options(section):
-    """ dictionary of filter specific options"""
-    return feed_options(section)
 
 def write(file=sys.stdout):
     """ write out an updated template """

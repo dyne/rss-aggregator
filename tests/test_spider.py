@@ -97,7 +97,7 @@ class SpiderTest(unittest.TestCase):
         config.load(configfile)
         self.spiderFeed(testfeed % '1b')
         self.assertEqual(5, len(self.cache_items()))
-        config.parser.set('Planet', 'filter', 'two')
+        config.parser.set('Planet', 'regexp', 'two')
         self.spiderFeed(testfeed % '1b')
         self.assertEqual(1, len(self.cache_items()))
 

@@ -36,13 +36,14 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual('one', config.feed_options('feed1')['name'])
         self.assertEqual('two', config.feed_options('feed2')['name'])
 
-    def test_filters(self):
-        self.assertEqual(
-            ['regexp_sifter.py?require=bar', 'stripAd/yahoo.sed'],
-            config.filters('feed2'))
-        self.assertEqual(
-            ['regexp_sifter.py?require=foo', 'excerpt.py'],
-            config.filters('feed1'))
+    def test_filter_options(self):
+        self.assertEqual(True, config.excerpt('feed1'))
+        self.assertEqual(False, config.excerpt('feed2'))
+        self.assertEqual('foo', config.regexp('feed1'))
+        self.assertEqual('bar', config.regexp('feed2'))
+        self.assertEqual('', config.sed('feed1'))
+        self.assertEqual('yahoo', config.sed('feed2'))
+        self.assertEqual('stripAd/yahoo.sed', config.sed_filter('feed2'))
 
     # ints
 
