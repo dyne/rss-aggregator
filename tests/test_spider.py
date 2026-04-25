@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 import unittest, os, glob, calendar, shutil, time, sqlite3
+from unittest import mock
 from src.spider import filename, spiderPlanet, writeCache
 from src import feedparser, config
+from src import reconstitute
 import src as planet
 
 workdir = 'tests/work/spider/cache'
@@ -77,6 +79,23 @@ class SpiderTest(unittest.TestCase):
         config.load(configfile)
         self.spiderFeed(testfeed % '1b')
         self.verify_spiderFeed()
+
+    def test_spiderFeed_skips_malformed_entry_and_keeps_processing(self):
+        config.load(configfile)
+        original = reconstitute.reconstitute
+        call_count = {'count': 0}
+
+        def fail_one_entry(data, entry):
+            call_count['count'] += 1
+            if call_count['count'] == 1:
+                raise ValueError('bad entry payload')
+            return original(data, entry)
+
+        with mock.patch('src.spider.reconstitute.reconstitute', side_effect=fail_one_entry):
+            self.spiderFeed(testfeed % '1b')
+
+        # three entries + sources directory remain when one malformed entry is skipped.
+        self.assertEqual(4, len(self.cache_items()))
 
     def test_spiderFeed_sqlite_cache(self):
         config.load(configfile)

@@ -203,57 +203,60 @@ def writeCache(feed_uri, feed_info, data):
     # write each entry to the cache
     cache = config.cache_directory()
     for updated, entry in ids.values():
-        entry_key = filename('', entry.id)
-        feedid = data.feed.get('id', data.feed.get('link', None))
+        try:
+            entry_key = filename('', entry.id)
+            feedid = data.feed.get('id', data.feed.get('link', None))
 
-        # compute cache file name based on the id
-        cache_file = filename(cache, entry.id)
+            # compute cache file name based on the id
+            cache_file = filename(cache, entry.id)
 
-        # get updated-date either from the entry or the cache (default to now)
-        mtime = None
-        if 'updated_parsed' not in entry or not entry['updated_parsed']:
-            entry['updated_parsed'] = entry.get('published_parsed',None)
-        if 'updated_parsed' in entry:
-            try:
-                mtime = calendar.timegm(entry.updated_parsed)
-            except:
-                pass
-        if not mtime:
-            try:
-                mtime = os.stat(cache_file).st_mtime
-            except:
-                if 'updated_parsed' in data.feed:
-                    try:
-                        mtime = calendar.timegm(data.feed.updated_parsed)
-                    except:
-                        pass
-        if not mtime: mtime = time.time()
-        entry['updated_parsed'] = time.gmtime(mtime)
+            # get updated-date either from the entry or the cache (default to now)
+            mtime = None
+            if 'updated_parsed' not in entry or not entry['updated_parsed']:
+                entry['updated_parsed'] = entry.get('published_parsed',None)
+            if 'updated_parsed' in entry:
+                try:
+                    mtime = calendar.timegm(entry.updated_parsed)
+                except:
+                    pass
+            if not mtime:
+                try:
+                    mtime = os.stat(cache_file).st_mtime
+                except:
+                    if 'updated_parsed' in data.feed:
+                        try:
+                            mtime = calendar.timegm(data.feed.updated_parsed)
+                        except:
+                            pass
+            if not mtime: mtime = time.time()
+            entry['updated_parsed'] = time.gmtime(mtime)
 
-        # apply any filters
-        xdoc = reconstitute.reconstitute(data, entry)
-        output = xdoc.toxml()
-        xdoc.unlink()
-        output = filtering.apply_filters(feed_uri, output)
-        if not output:
-          if os.path.exists(cache_file): os.remove(cache_file)
-          storage.delete_entry(entry_key)
-          continue
+            # apply any filters
+            xdoc = reconstitute.reconstitute(data, entry)
+            output = xdoc.toxml()
+            xdoc.unlink()
+            output = filtering.apply_filters(feed_uri, output)
+            if not output:
+              if os.path.exists(cache_file): os.remove(cache_file)
+              storage.delete_entry(entry_key)
+              continue
 
-        # write out and timestamp the results
-        write(output, cache_file, mtime) 
-        storage.upsert_entry(
-            entry_key=entry_key,
-            entry_id=entry.id,
-            feed_id=feedid,
-            updated_ts=mtime,
-            entry_xml=output
-        )
-    
-        # optionally index
-        if index != None: 
-            if feedid:
-                index[entry_key] = feedid
+            # write out and timestamp the results
+            write(output, cache_file, mtime) 
+            storage.upsert_entry(
+                entry_key=entry_key,
+                entry_id=entry.id,
+                feed_id=feedid,
+                updated_ts=mtime,
+                entry_xml=output
+            )
+        
+            # optionally index
+            if index != None: 
+                if feedid:
+                    index[entry_key] = feedid
+        except Exception:
+            log.exception("Skipping malformed entry from %s", feed_uri)
 
     if index: index.close()
 
@@ -513,6 +516,17 @@ def spiderPlanet(only_if_new = False):
                 for line in (traceback.format_exception_only(type, value) +
                     traceback.format_tb(tb)):
                     log.error(line.rstrip())
+                data = feedparser.FeedParserDict({
+                    'version': None,
+                    'headers': feedparser.FeedParserDict({'status': '500'}),
+                    'entries': [],
+                    'feed': feedparser.FeedParserDict(),
+                    'href': uri,
+                    'bozo': 1,
+                    'status': 500,
+                })
+                data.feed['planet_message'] = 'parse failure'
+                writeCache(uri, feed_info, data)
 
         time.sleep(0.1)
 
