@@ -1,8 +1,10 @@
 """Helpers for extracting feed and page media metadata."""
 
 from html.parser import HTMLParser
+import ipaddress
 import os
 import re
+import socket
 import urllib.parse
 import urllib.request
 
@@ -17,6 +19,54 @@ def looks_like_image(url, mime_type=None):
         return True
     lower = url.lower()
     return any(lower.endswith(ext) for ext in IMAGE_EXTENSIONS)
+
+
+def _is_public_ip(value):
+    """Return True when an IP address is globally routable."""
+    ip = ipaddress.ip_address(value)
+    return not (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_multicast
+        or ip.is_unspecified
+        or ip.is_reserved
+    )
+
+
+def safe_public_http_url(url, resolver=None):
+    """Return True when a URL is HTTP(S) and resolves to public IPs only."""
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        return False
+    if not parsed.netloc or parsed.username or parsed.password:
+        return False
+    host = parsed.hostname
+    if not host:
+        return False
+
+    try:
+        ipaddress.ip_address(host)
+        return _is_public_ip(host)
+    except ValueError:
+        pass
+
+    resolver = resolver or socket.getaddrinfo
+    try:
+        resolved = resolver(host, None)
+    except OSError:
+        return False
+    if not resolved:
+        return False
+
+    for row in resolved:
+        ip = row[4][0]
+        try:
+            if not _is_public_ip(ip):
+                return False
+        except ValueError:
+            return False
+    return True
 
 
 def first_image_from_html(value, base_url=None):

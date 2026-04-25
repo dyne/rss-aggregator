@@ -21,6 +21,34 @@ class MediaTest(unittest.TestCase):
         self.assertEqual('http://example.com/cover.png',
             media.first_image_from_html(value, 'http://example.com/post'))
 
+    def test_safe_public_http_url_allows_public_http_and_https(self):
+        def resolver(host, _port):
+            if host == 'example.com':
+                return [(None, None, None, None, ('93.184.216.34', 0))]
+            if host == 'example.org':
+                return [(None, None, None, None, ('2606:2800:220:1:248:1893:25c8:1946', 0))]
+            return []
+
+        self.assertTrue(media.safe_public_http_url('http://example.com/', resolver=resolver))
+        self.assertTrue(media.safe_public_http_url('https://example.org/', resolver=resolver))
+
+    def test_safe_public_http_url_rejects_unsafe_or_malformed_urls(self):
+        def resolver(host, _port):
+            if host == 'localhost':
+                return [(None, None, None, None, ('127.0.0.1', 0))]
+            if host == 'internal.example':
+                return [(None, None, None, None, ('10.0.1.7', 0))]
+            return []
+
+        self.assertFalse(media.safe_public_http_url('file:///tmp/page.html', resolver=resolver))
+        self.assertFalse(media.safe_public_http_url('ftp://example.com/', resolver=resolver))
+        self.assertFalse(media.safe_public_http_url('http://127.0.0.1/', resolver=resolver))
+        self.assertFalse(media.safe_public_http_url('http://[::1]/', resolver=resolver))
+        self.assertFalse(media.safe_public_http_url('http://localhost/', resolver=resolver))
+        self.assertFalse(media.safe_public_http_url('http://internal.example/', resolver=resolver))
+        self.assertFalse(media.safe_public_http_url('http://user:pass@example.com/', resolver=resolver))
+        self.assertFalse(media.safe_public_http_url('http:///missing-host', resolver=resolver))
+
     def test_fetch_open_graph_image_from_file(self):
         os.makedirs(WORKDIR)
         path = os.path.join(WORKDIR, 'page.html')
