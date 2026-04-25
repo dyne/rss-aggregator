@@ -2,6 +2,7 @@
 
 import unittest, os, glob, calendar, shutil, time, sqlite3
 from unittest import mock
+from queue import Queue
 from src.spider import filename, spiderPlanet, writeCache
 from src import feedparser, config
 from src import reconstitute
@@ -198,3 +199,50 @@ class SpiderTest(unittest.TestCase):
         self.assertEqual([200,200,200,200,404], status)
 
         self.verify_spiderPlanet()
+
+    def test_http_thread_marks_oversized_feed_as_413(self):
+        class _FakeResponse:
+            def __init__(self):
+                self.headers = {}
+
+            def read(self, _size):
+                from src.spider import MAX_FEED_BYTES
+                return b'x' * (MAX_FEED_BYTES + 1)
+
+            def getcode(self):
+                return 200
+
+            def close(self):
+                return None
+
+        input_queue = Queue()
+        output_queue = Queue()
+        uri = 'http://example.com/feed.atom'
+        input_queue.put((uri, feedparser.parse('<feed/>')))
+        input_queue.put((None, None))
+
+        with mock.patch('src.spider.urllib.request.urlopen', return_value=_FakeResponse()):
+            from src.spider import httpThread
+            httpThread(0, input_queue, output_queue, planet.logger)
+
+        _uri, _feed_info, feed = output_queue.get_nowait()
+        self.assertEqual('413', str(feed.headers.status))
+
+    def test_spiderPlanet_records_parse_failure_without_crash(self):
+        config.load(configfile)
+        uri = 'http://malicious.example/malformed.atom'
+        sources_dir = config.cache_sources_directory()
+        source_cache_path = filename(sources_dir, uri)
+        original_parse = feedparser.parse
+
+        def fake_parse(source, *args, **kwargs):
+            if source == uri:
+                raise ValueError('malformed feed body')
+            return original_parse(source, *args, **kwargs)
+
+        with mock.patch('src.spider.config.subscriptions', return_value=[uri]):
+            with mock.patch('src.spider.feedparser.parse', side_effect=fake_parse):
+                spiderPlanet()
+
+        source = original_parse(source_cache_path)
+        self.assertEqual('internal server error', source.feed.get('planet_message'))
