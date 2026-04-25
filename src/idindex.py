@@ -19,6 +19,7 @@ def _node_text(node):
 
 def _extract_entry_and_source_id(path):
     """Read a cached entry file and return `(entry_id, source_id)`."""
+    # Cache files are treated as untrusted XML and parse errors are handled by callers.
     doc = minidom.parse(path)
     doc.normalize()
     entry_id = None

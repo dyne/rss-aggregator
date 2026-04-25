@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import unittest
+from unittest import mock
 from src.splice import splice, config
 
 configfile = 'tests/data/splice/config.ini'
@@ -32,3 +33,11 @@ class SpliceTest(unittest.TestCase):
         self.assertEqual(9,len(doc.getElementsByTagName('entry')))
         self.assertEqual(4,len(doc.getElementsByTagName('planet:source')))
         self.assertEqual(13,len(doc.getElementsByTagName('planet:name')))
+
+    def test_splice_skips_corrupt_cached_sqlite_entry(self):
+        config.load(configfile)
+        with mock.patch('src.splice.storage.list_entries_by_recency', return_value=[
+            ('broken-entry', None, None, 0, '<entry><broken'),
+        ]):
+            doc = splice()
+        self.assertEqual(0, len(doc.getElementsByTagName('entry')))

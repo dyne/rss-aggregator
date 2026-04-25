@@ -8,6 +8,16 @@ from .reconstitute import createTextElement, date
 from .spider import filename
 from src import idindex
 
+MAX_CACHED_ENTRY_XML_BYTES = 2 * 1024 * 1024
+
+
+def _cached_entry_too_large(entry_key, source):
+    """Return True when one cached entry payload exceeds parser limits."""
+    if entry_key:
+        return len(source.encode('utf-8', 'replace')) > MAX_CACHED_ENTRY_XML_BYTES
+    return os.path.getsize(source) > MAX_CACHED_ENTRY_XML_BYTES
+
+
 def splice():
     """ Splice together a planet from a cache of entries """
     log = planet.logger
@@ -100,6 +110,10 @@ def splice():
                 continue
         source_name = source
         try:
+            # Cache rows/files are untrusted parser inputs until verified.
+            if _cached_entry_too_large(entry_key, source):
+                log.error("Skipping oversized cached entry %s", source_name)
+                continue
             if entry_key:
                 entry = minidom.parseString(source)
                 source_name = entry_key
