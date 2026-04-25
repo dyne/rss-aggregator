@@ -8,6 +8,8 @@ import socket
 import urllib.parse
 import urllib.request
 
+from . import net
+
 
 IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif")
 IMG_RE = re.compile(r"""<img[^>]+src=['"]([^'"]+)['"]""", re.IGNORECASE)
@@ -116,7 +118,7 @@ def fetch_open_graph_image(url, timeout=10):
     content_type = response.headers.get("content-type", "")
     if "html" not in content_type:
         return None
-    body = response.read(262144).decode("utf-8", "replace")
+    body = net.read_limited_bytes(response, 262144, close=True).decode("utf-8", "replace")
     parser = OpenGraphParser(url)
     parser.feed(body)
     return parser.image
