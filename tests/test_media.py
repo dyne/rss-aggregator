@@ -49,19 +49,9 @@ class MediaTest(unittest.TestCase):
         self.assertFalse(media.safe_public_http_url('http://user:pass@example.com/', resolver=resolver))
         self.assertFalse(media.safe_public_http_url('http:///missing-host', resolver=resolver))
 
-    def test_fetch_open_graph_image_from_file(self):
-        os.makedirs(WORKDIR)
-        path = os.path.join(WORKDIR, 'page.html')
-        with open(path, 'w', encoding='utf-8') as handle:
-            handle.write(
-                '<html><head>'
-                '<meta property="og:image" content="shots/site.png" />'
-                '</head><body></body></html>')
-
-        file_url = 'file://' + os.path.abspath(path)
-        self.assertEqual(
-            'file://' + os.path.abspath(os.path.join(WORKDIR, 'shots', 'site.png')),
-            media.fetch_open_graph_image(file_url))
+    def test_fetch_open_graph_image_rejects_unsafe_scheme(self):
+        with self.assertRaises(ValueError):
+            media.fetch_open_graph_image('file:///tmp/page.html')
 
     def test_feed_screenshot_prefers_feed_metadata_over_cache(self):
         feed = {
@@ -173,6 +163,16 @@ class MediaTest(unittest.TestCase):
                     {'links': [{'rel': 'alternate', 'href': 'ftp://example.com/feed'}]},
                     cached='http://example.com/cached.png',
                     cached_homepage='http://example.com/'))
+        fetch.assert_not_called()
+
+    def test_feed_screenshot_keeps_cache_for_private_homepage(self):
+        with mock.patch.object(media, 'fetch_open_graph_image') as fetch:
+            self.assertEqual(
+                'http://example.com/cached.png',
+                media.feed_screenshot(
+                    {'links': [{'rel': 'alternate', 'href': 'http://127.0.0.1/private'}]},
+                    cached='http://example.com/cached.png',
+                    cached_homepage='http://example.net/'))
         fetch.assert_not_called()
 
     def test_feed_screenshot_swallows_fetch_errors(self):
