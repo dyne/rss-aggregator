@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import unittest, xml.dom.minidom
+from unittest import mock
 from src import config, filtering, logger
 
 class FilterTests(unittest.TestCase):
@@ -66,6 +67,25 @@ class FilterTests(unittest.TestCase):
             'tests/data/filter/category-two.xml')
 
         self.assertEqual('', output)
+
+    def test_apply_sed_rejects_unknown_script_name(self):
+        with mock.patch('src.filtering.subprocess.Popen') as popen:
+            self.assertEqual('<entry/>', filtering.apply_sed('<entry/>', 'unknown'))
+        popen.assert_not_called()
+
+    def test_apply_sed_uses_allowlisted_script_without_shell(self):
+        fake_proc = mock.Mock()
+        fake_proc.communicate.return_value = ('<entry/>', '')
+
+        with mock.patch('src.filtering.subprocess.Popen', return_value=fake_proc) as popen:
+            output = filtering.apply_sed('<entry/>', 'yahoo')
+
+        self.assertEqual('<entry/>', output)
+        args, kwargs = popen.call_args
+        self.assertEqual('sed', args[0][0])
+        self.assertEqual('-f', args[0][1])
+        self.assertTrue(args[0][2].endswith('filters/stripAd/yahoo.sed'))
+        self.assertFalse(kwargs.get('shell', False))
 
 try:
     from subprocess import Popen, PIPE
