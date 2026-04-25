@@ -93,5 +93,5 @@ must stay limited to public `http`/`https` targets and must not fetch
 `file://` or private/loopback/link-local network destinations. Keep response
 body limits in place for remote fetches (`src/net.py`) to avoid memory and
 parser amplification. Preserve sanitizer and RSS/JSON output invariants:
-active HTML payloads must remain neutralized, and RSS CDATA sections must
-escape embedded `]]>` sequences.
+active HTML payloads must be rendered to text before serialization, and RSS
+description/content fields must not carry raw HTML markup.

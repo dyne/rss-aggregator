@@ -223,17 +223,17 @@ class OutputTest(unittest.TestCase):
         first_guid = items[0].getElementsByTagName("guid")[0]
         self.assertEqual("true", first_guid.getAttribute("isPermaLink"))
         self.assertEqual(
-            "<p>Summary only</p>",
+            "Summary only",
             items[0].getElementsByTagName("description")[0].firstChild.nodeValue)
         self.assertEqual(0, len(items[0].getElementsByTagName("content:encoded")))
 
         second_item = items[1]
         self.assertEqual(0, len(second_item.getElementsByTagName("pubDate")))
         self.assertEqual(
-            "<p>Content only</p>",
+            "Content only",
             second_item.getElementsByTagName("description")[0].firstChild.nodeValue)
         self.assertEqual(
-            "<p>Content only</p>",
+            "Content only",
             second_item.getElementsByTagName("content:encoded")[0].firstChild.nodeValue)
         enclosure = second_item.getElementsByTagName("enclosure")[0]
         self.assertEqual("application/octet-stream", enclosure.getAttribute("type"))
@@ -278,6 +278,8 @@ class OutputTest(unittest.TestCase):
         self.assertEqual(
             [{"name": "Entry Author", "url": "http://example.com/authors/entry"}],
             item["authors"])
+        self.assertEqual("Summary", item["content_html"])
+        self.assertEqual("Summary", item["summary"])
         self.assertEqual("http://example.com/source", item["_source"]["url"])
         self.assertEqual({"planet_name": "Venus"}, item["_source"]["planet"])
 
@@ -309,7 +311,7 @@ class OutputTest(unittest.TestCase):
         self.assertEqual("http://example.com/from-first-link", feed["home_page_url"])
         self.assertEqual("http://example.com/from-first-link/feed.json", feed["feed_url"])
 
-    def test_render_rss_escapes_cdata_terminator_sequences(self):
+    def test_render_rss_renders_text_without_html_markup(self):
         rss = output.render_rss({
             "title": "CDATA Feed",
             "subtitle": None,
@@ -335,8 +337,8 @@ class OutputTest(unittest.TestCase):
         # Must remain parseable XML and preserve the payload string.
         doc = minidom.parseString(rss)
         item = doc.getElementsByTagName("item")[0]
-        description_payload = ''.join(node.nodeValue for node in item.getElementsByTagName("description")[0].childNodes)
-        encoded_payload = ''.join(node.nodeValue for node in item.getElementsByTagName("content:encoded")[0].childNodes)
+        description_payload = item.getElementsByTagName("description")[0].firstChild.nodeValue
+        encoded_payload = item.getElementsByTagName("content:encoded")[0].firstChild.nodeValue
         self.assertEqual(
             "safe ]]> break",
             description_payload)

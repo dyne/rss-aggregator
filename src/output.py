@@ -9,6 +9,7 @@ from xml.dom import minidom
 from xml.sax.saxutils import escape
 
 from . import config, media
+from .shell.html import stripHtml
 
 RSS_OUTPUT_NAME = "rss.xml"
 JSON_OUTPUT_NAME = "feed.json"
@@ -50,6 +51,8 @@ def _content_payload(node, name):
     payload = _child_xml(element)
     if not payload:
         payload = _text(element)
+    if payload:
+        payload = str(stripHtml(payload))
     return payload, element.getAttribute("type") or "text"
 
 
@@ -187,9 +190,11 @@ def _channel_description(feed):
     return feed.get("subtitle") or feed["title"]
 
 
-def _escape_cdata(value):
-    """Escape CDATA terminators so attacker text cannot break RSS structure."""
-    return value.replace("]]>", "]]]]><![CDATA[>")
+def _rendered_text(value):
+    """Render one HTML fragment or text value as plain text."""
+    if value is None:
+        return None
+    return str(stripHtml(value))
 
 
 def _json_item(entry):
@@ -206,9 +211,9 @@ def _json_item(entry):
     item = {
         "id": entry["id"],
         "url": _alternate_url(entry["links"]),
-        "title": entry["title"],
-        "content_html": entry["content"] or entry["summary"],
-        "summary": entry["summary"],
+        "title": _rendered_text(entry["title"]),
+        "content_html": _rendered_text(entry["content"] or entry["summary"]),
+        "summary": _rendered_text(entry["summary"]),
         "date_published": entry["published"],
         "date_modified": entry["updated"],
         "tags": entry["categories"],
@@ -271,7 +276,7 @@ def _rss_item_xml(entry):
     """Render one feed item as RSS item XML."""
     parts = ["<item>"]
     if entry["title"]:
-        parts.append(f"<title>{escape(entry['title'])}</title>")
+        parts.append(f"<title>{escape(_rendered_text(entry['title']))}</title>")
     link = _alternate_url(entry["links"])
     if link:
         parts.append(f"<link>{escape(link)}</link>")
@@ -282,11 +287,11 @@ def _rss_item_xml(entry):
     if pub_date:
         parts.append(f"<pubDate>{pub_date}</pubDate>")
     if entry["summary"]:
-        parts.append(f"<description><![CDATA[{_escape_cdata(entry['summary'])}]]></description>")
+        parts.append(f"<description>{escape(_rendered_text(entry['summary']))}</description>")
     elif entry["content"]:
-        parts.append(f"<description><![CDATA[{_escape_cdata(entry['content'])}]]></description>")
+        parts.append(f"<description>{escape(_rendered_text(entry['content']))}</description>")
     if entry["content"]:
-        parts.append(f"<content:encoded><![CDATA[{_escape_cdata(entry['content'])}]]></content:encoded>")
+        parts.append(f"<content:encoded>{escape(_rendered_text(entry['content']))}</content:encoded>")
     author = _rss_author_text(entry.get("author") or {})
     if author:
         parts.append(f"<author>{escape(author)}</author>")
@@ -330,16 +335,16 @@ def render_rss(feed):
         'xmlns:media="http://search.yahoo.com/mrss/" '
         'xmlns:planet="http://planet.intertwingly.net/">',
         "<channel>",
-        f"<title>{escape(feed['title'])}</title>",
+        f"<title>{escape(_rendered_text(feed['title']))}</title>",
     ]
     if feed["home_page_url"]:
         rss_parts.append(f"<link>{escape(feed['home_page_url'])}</link>")
-    rss_parts.append(f"<description>{escape(_channel_description(feed))}</description>")
+    rss_parts.append(f"<description>{escape(_rendered_text(_channel_description(feed)))}</description>")
     last_build = _format_rss_datetime(feed.get("updated"))
     if last_build:
         rss_parts.append(f"<lastBuildDate>{last_build}</lastBuildDate>")
     if feed.get("rights"):
-        rss_parts.append(f"<copyright>{escape(feed['rights'])}</copyright>")
+        rss_parts.append(f"<copyright>{escape(_rendered_text(feed['rights']))}</copyright>")
     author = _rss_author_text(feed.get("author") or {})
     if author:
         rss_parts.append(f"<managingEditor>{escape(author)}</managingEditor>")

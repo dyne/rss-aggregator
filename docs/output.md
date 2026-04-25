@@ -17,10 +17,10 @@ The built-in writers preserve the normalized aggregate feed title, link, owner m
 
 ### JSON HTML boundary
 
-`feed.json` includes `content_html` values derived from subscribed feeds after Venus sanitization. This is safe as static JSON output, but downstream consumers still decide how to render that HTML.
+`feed.json` includes rendered text values derived from subscribed feeds after Venus sanitization. The JSON output does not carry raw HTML markup.
 
-- Render `content_html` only in contexts where sanitized feed HTML is acceptable.
-- If a client needs plain text, strip tags or ignore `content_html`.
+- Treat `content_html` as rendered text, not HTML.
+- If a client needs markup, it must source it elsewhere.
 - Serve `feed.json` with `application/feed+json` or `application/json` where deployment controls response headers.
 
 ### No theme selection
