@@ -308,3 +308,38 @@ class OutputTest(unittest.TestCase):
 
         self.assertEqual("http://example.com/from-first-link", feed["home_page_url"])
         self.assertEqual("http://example.com/from-first-link/feed.json", feed["feed_url"])
+
+    def test_render_rss_escapes_cdata_terminator_sequences(self):
+        rss = output.render_rss({
+            "title": "CDATA Feed",
+            "subtitle": None,
+            "updated": None,
+            "rights": None,
+            "home_page_url": None,
+            "author": {},
+            "entries": [{
+                "title": "CDATA Item",
+                "id": "tag:example.com,2026:cdata",
+                "published": None,
+                "updated": None,
+                "summary": None,
+                "content": "safe ]]> break",
+                "links": [{"rel": "alternate", "href": "http://example.com/cdata"}],
+                "categories": [],
+                "author": {},
+                "screenshot": None,
+                "source": {"title": None, "id": None, "links": [], "screenshot": None},
+            }],
+        })
+
+        # Must remain parseable XML and preserve the payload string.
+        doc = minidom.parseString(rss)
+        item = doc.getElementsByTagName("item")[0]
+        description_payload = ''.join(node.nodeValue for node in item.getElementsByTagName("description")[0].childNodes)
+        encoded_payload = ''.join(node.nodeValue for node in item.getElementsByTagName("content:encoded")[0].childNodes)
+        self.assertEqual(
+            "safe ]]> break",
+            description_payload)
+        self.assertEqual(
+            "safe ]]> break",
+            encoded_payload)

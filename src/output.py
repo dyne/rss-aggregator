@@ -187,6 +187,11 @@ def _channel_description(feed):
     return feed.get("subtitle") or feed["title"]
 
 
+def _escape_cdata(value):
+    """Escape CDATA terminators so attacker text cannot break RSS structure."""
+    return value.replace("]]>", "]]]]><![CDATA[>")
+
+
 def _json_item(entry):
     """Render one feed item as JSON Feed data."""
     source = entry["source"]
@@ -277,11 +282,11 @@ def _rss_item_xml(entry):
     if pub_date:
         parts.append(f"<pubDate>{pub_date}</pubDate>")
     if entry["summary"]:
-        parts.append(f"<description><![CDATA[{entry['summary']}]]></description>")
+        parts.append(f"<description><![CDATA[{_escape_cdata(entry['summary'])}]]></description>")
     elif entry["content"]:
-        parts.append(f"<description><![CDATA[{entry['content']}]]></description>")
+        parts.append(f"<description><![CDATA[{_escape_cdata(entry['content'])}]]></description>")
     if entry["content"]:
-        parts.append(f"<content:encoded><![CDATA[{entry['content']}]]></content:encoded>")
+        parts.append(f"<content:encoded><![CDATA[{_escape_cdata(entry['content'])}]]></content:encoded>")
     author = _rss_author_text(entry.get("author") or {})
     if author:
         parts.append(f"<author>{escape(author)}</author>")
