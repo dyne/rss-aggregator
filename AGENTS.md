@@ -85,3 +85,13 @@ The maintained filter contract is also narrow: use built-in `excerpt`,
 `regexp`, and `sed` config options instead of generic `filters = ...`,
 `filter_directories`, or per-filter config sections. `sed` accepts only the
 bundled short names in `filters/stripAd/`.
+
+## Security Boundaries
+
+Treat feed and feed-metadata URLs as untrusted input. Open Graph enrichment
+must stay limited to public `http`/`https` targets and must not fetch
+`file://` or private/loopback/link-local network destinations. Keep response
+body limits in place for remote fetches (`src/net.py`) to avoid memory and
+parser amplification. Preserve sanitizer and RSS/JSON output invariants:
+active HTML payloads must remain neutralized, and RSS CDATA sections must
+escape embedded `]]>` sequences.
