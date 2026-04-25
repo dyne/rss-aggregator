@@ -8,7 +8,7 @@ import time, calendar, re, os, urllib.parse, urllib.request, urllib.error
 from xml.dom import minidom
 # Planet modules
 import src as planet
-from . import config, filtering, media, reconstitute, scrub, storage
+from . import config, filtering, media, net, reconstitute, scrub, storage
 from src import feedparser
 import socket
 from io import BytesIO, StringIO
@@ -25,6 +25,7 @@ re_initial_cruft = re.compile(r'^[,.]*')
 re_final_cruft   = re.compile(r'[,.]*$')
 
 index = True
+MAX_FEED_BYTES = 5 * 1024 * 1024
 
 def filename(directory, filename):
     """Return a filename suitable for the cache.
@@ -339,13 +340,22 @@ def httpThread(thread_index, input_queue, output_queue, log):
             request = urllib.request.Request(idna, headers=headers)
             try:
                 response = urllib.request.urlopen(request)
-                content = response.read()
+                content = net.read_limited_bytes(response, MAX_FEED_BYTES, close=True)
                 status = response.getcode()
                 response_headers = response.headers
             except urllib.error.HTTPError as e:
-                content = e.read()
-                status = e.code
-                response_headers = e.headers
+                try:
+                    content = net.read_limited_bytes(e, MAX_FEED_BYTES, close=True)
+                    status = e.code
+                    response_headers = e.headers
+                except net.ResponseTooLarge:
+                    content = b''
+                    status = 413
+                    response_headers = feedparser.FeedParserDict()
+            except net.ResponseTooLarge:
+                content = b''
+                status = 413
+                response_headers = feedparser.FeedParserDict()
 
             resp = feedparser.FeedParserDict({
                 'status': status,
