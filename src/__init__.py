@@ -43,6 +43,7 @@ except Exception:
     pass
 
 _feedparser_parse = feedparser.parse
+MAX_COMPAT_XML_BYTES = 2 * 1024 * 1024
 
 def _source_text(source):
     """Return source XML text when parse input can be inspected cheaply."""
@@ -55,10 +56,20 @@ def _source_text(source):
         return source
     return None
 
+
+def _unsafe_compat_xml(xml):
+    """Return True when raw XML text is unsuitable for compatibility parsing."""
+    if not xml:
+        return True
+    if len(xml.encode('utf-8', 'replace')) > MAX_COMPAT_XML_BYTES:
+        return True
+    lowered = xml.lower()
+    return '<!doctype' in lowered or '<!entity' in lowered
+
 def _gr_original_ids(source):
     """Extract Google Reader original entry ids not exposed by feedparser 6."""
     xml = _source_text(source)
-    if not xml or 'original-id' not in xml:
+    if not xml or 'original-id' not in xml or _unsafe_compat_xml(xml):
         return []
     try:
         from xml.dom import minidom
