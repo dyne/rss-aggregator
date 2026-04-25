@@ -109,6 +109,8 @@ class OpenGraphParser(HTMLParser):
 
 def fetch_open_graph_image(url, timeout=10):
     """Fetch one source page and return its first useful image metadata URL."""
+    if not safe_public_http_url(url):
+        raise ValueError("unsafe url")
     request = urllib.request.Request(url, headers={"user-agent": "venus"})
     response = urllib.request.urlopen(request, timeout=timeout)
     content_type = response.headers.get("content-type", "")
@@ -168,7 +170,7 @@ def feed_screenshot(feed, cached=None, cached_homepage=None):
 
     if not homepage:
         return cached
-    if urllib.parse.urlparse(homepage).scheme not in ("http", "https", "file"):
+    if not safe_public_http_url(homepage):
         return cached
 
     try:
