@@ -6,10 +6,12 @@ It is intentionally small and heavily commented so it can be used as a base temp
 
 ### Configuration
 
-Edit only these two constants in [index.html](index.html):
+Edit these constants in [index.html](index.html):
 
 - `NEWS_BASE_URL`: URL of the directory that contains `news-index.json` and `news/`.
 - `ITEMS_TO_SHOW`: number of newest items to request and render.
+- `SHOW_DATE`: `true` to render each entry date (when present).
+- `SHOW_SOURCE`: `true` to render each entry source (when present).
 
 ### Local Run
 
