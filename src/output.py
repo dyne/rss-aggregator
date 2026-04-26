@@ -14,6 +14,8 @@ RSS_OUTPUT_NAME = "news.xml"
 JSON_OUTPUT_NAME = "feed.json"
 OUTPUT_FILE_NAMES = (RSS_OUTPUT_NAME, JSON_OUTPUT_NAME)
 LEGACY_OUTPUT_FILE_NAMES = ("rss.xml", "feed.json")
+NEWS_DIR_NAME = "news"
+NEWS_INDEX_NAME = "news-index.json"
 
 
 def _direct_children(node, name):
@@ -191,6 +193,16 @@ def _channel_description(feed):
 def _escape_cdata(value):
     """Escape CDATA terminators so attacker text cannot break RSS structure."""
     return value.replace("]]>", "]]]]><![CDATA[>")
+
+
+def news_entry_name(position):
+    """Return one numbered entry filename for `NEWS_DIR_NAME`."""
+    return "%d.json" % position
+
+
+def news_entry_relative_url(position):
+    """Return one relative URL for one numbered news entry."""
+    return "%s/%s" % (NEWS_DIR_NAME, news_entry_name(position))
 
 
 def _json_item(entry):
