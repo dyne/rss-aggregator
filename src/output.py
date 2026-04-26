@@ -3,9 +3,11 @@
 import json
 import os
 import calendar
+import base64
 import hashlib
 import urllib.parse
 import urllib.request
+import time
 from email.utils import formatdate
 from xml.dom import minidom
 from xml.sax.saxutils import escape
@@ -107,6 +109,7 @@ def fetch_cached_image(url, timeout=10):
                 "url": url,
                 "mime_type": mime_type,
                 "size": len(body),
+                "fetched_at": int(time.time()),
             },
             handle,
             ensure_ascii=False,
@@ -381,6 +384,31 @@ def _news_image(entry, image_loader=None):
     return {"url": image_url}
 
 
+def build_embedded_image(url, image_fetcher=fetch_cached_image):
+    """Return one embedded image object for a numbered news entry."""
+    try:
+        image = image_fetcher(url)
+    except (OSError, ValueError, net.ResponseTooLarge):
+        return {"url": url}
+    if not image:
+        return {"url": url}
+    if image.get("size", MAX_IMAGE_EMBED_BYTES + 1) > MAX_IMAGE_EMBED_BYTES:
+        return {"url": url}
+    try:
+        with open(image["path"], "rb") as handle:
+            payload = handle.read()
+    except (OSError, KeyError):
+        return {"url": url}
+    result = {
+        "url": url,
+        "mime_type": image.get("mime_type") or validate_image_bytes(payload),
+        "data_base64": base64.b64encode(payload).decode("ascii"),
+    }
+    if not result["mime_type"]:
+        del result["mime_type"]
+    return result
+
+
 def _news_entry_dict(entry, image_loader=None):
     """Build the compact entry payload for one numbered news JSON file."""
     payload = {
@@ -588,7 +616,7 @@ def write_outputs(doc):
         news_entry_path = os.path.join(news_dir, entry_name)
         tmp_path = os.path.join(news_dir, ".%s.tmp" % entry_name)
         with open(tmp_path, "w", encoding="utf-8") as handle:
-            handle.write(render_news_entry(entry))
+            handle.write(render_news_entry(entry, image_loader=build_embedded_image))
         os.replace(tmp_path, news_entry_path)
 
     # Remove stale numbered entries while preserving unrelated files.

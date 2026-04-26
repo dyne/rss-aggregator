@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import unittest
+import base64
 from unittest import mock
 from xml.dom import minidom
 
@@ -543,3 +544,45 @@ class OutputTest(unittest.TestCase):
         self.assertEqual(1, calls["count"])
         self.assertEqual(first["path"], second["path"])
         self.assertEqual("image/png", first["mime_type"])
+        with open(output._image_cache_paths("http://example.com/pic.png")[1], encoding="utf-8") as handle:
+            metadata = json.load(handle)
+        self.assertTrue("fetched_at" in metadata)
+
+    def test_build_embedded_image_includes_base64_for_small_cached_image(self):
+        config.load(configfile)
+        payload = b"\x89PNG\r\n\x1a\nsmall-png"
+        image_path = os.path.join(workdir, "small.img")
+        with open(image_path, "wb") as handle:
+            handle.write(payload)
+
+        image = output.build_embedded_image(
+            "http://example.com/pic.png",
+            image_fetcher=lambda _url: {
+                "path": image_path,
+                "mime_type": "image/png",
+                "size": len(payload),
+            },
+        )
+        self.assertEqual("http://example.com/pic.png", image["url"])
+        self.assertEqual("image/png", image["mime_type"])
+        self.assertEqual(base64.b64encode(payload).decode("ascii"), image["data_base64"])
+
+    def test_build_embedded_image_falls_back_for_oversized_image(self):
+        config.load(configfile)
+        image = output.build_embedded_image(
+            "http://example.com/pic.png",
+            image_fetcher=lambda _url: {
+                "path": "/tmp/unused",
+                "mime_type": "image/png",
+                "size": output.MAX_IMAGE_EMBED_BYTES + 1,
+            },
+        )
+        self.assertEqual({"url": "http://example.com/pic.png"}, image)
+
+    def test_build_embedded_image_falls_back_when_fetch_fails(self):
+        config.load(configfile)
+        image = output.build_embedded_image(
+            "http://example.com/pic.png",
+            image_fetcher=lambda _url: (_ for _ in ()).throw(ValueError("boom")),
+        )
+        self.assertEqual({"url": "http://example.com/pic.png"}, image)
