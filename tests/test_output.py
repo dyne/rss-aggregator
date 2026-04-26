@@ -488,6 +488,70 @@ class OutputTest(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(news_dir, "1.json")))
         self.assertFalse(os.path.exists(os.path.join(news_dir, "2.json")))
 
+    def test_apply_renumbers_news_entries_when_fresher_item_arrives(self):
+        config.load(configfile)
+        first_doc = (
+            '<feed xmlns="http://www.w3.org/2005/Atom">'
+            '<title>Renumber feed</title>'
+            '<entry>'
+            '<id>tag:example.com,2026:a</id>'
+            '<title>Entry A</title>'
+            '<updated>2026-04-24T11:00:00Z</updated>'
+            '<link rel="alternate" href="http://example.com/a" />'
+            '</entry>'
+            '<entry>'
+            '<id>tag:example.com,2026:b</id>'
+            '<title>Entry B</title>'
+            '<updated>2026-04-24T10:00:00Z</updated>'
+            '<link rel="alternate" href="http://example.com/b" />'
+            '</entry>'
+            '</feed>'
+        )
+        second_doc = (
+            '<feed xmlns="http://www.w3.org/2005/Atom">'
+            '<title>Renumber feed</title>'
+            '<entry>'
+            '<id>tag:example.com,2026:c</id>'
+            '<title>Entry C</title>'
+            '<updated>2026-04-24T12:00:00Z</updated>'
+            '<link rel="alternate" href="http://example.com/c" />'
+            '</entry>'
+            '<entry>'
+            '<id>tag:example.com,2026:a</id>'
+            '<title>Entry A</title>'
+            '<updated>2026-04-24T11:00:00Z</updated>'
+            '<link rel="alternate" href="http://example.com/a" />'
+            '</entry>'
+            '<entry>'
+            '<id>tag:example.com,2026:b</id>'
+            '<title>Entry B</title>'
+            '<updated>2026-04-24T10:00:00Z</updated>'
+            '<link rel="alternate" href="http://example.com/b" />'
+            '</entry>'
+            '</feed>'
+        )
+
+        splice.apply(first_doc)
+        with open(os.path.join(workdir, output.JSON_OUTPUT_NAME), encoding='utf-8') as handle:
+            index = json.load(handle)
+        with open(os.path.join(workdir, index["urls"][0]), encoding='utf-8') as handle:
+            first = json.load(handle)
+        self.assertEqual("tag:example.com,2026:a", first["id"])
+
+        splice.apply(second_doc)
+        with open(os.path.join(workdir, output.JSON_OUTPUT_NAME), encoding='utf-8') as handle:
+            index = json.load(handle)
+        self.assertEqual({"total": 3, "urls": ["news/1.json", "news/2.json", "news/3.json"]}, index)
+        with open(os.path.join(workdir, "news/1.json"), encoding='utf-8') as handle:
+            first = json.load(handle)
+        with open(os.path.join(workdir, "news/2.json"), encoding='utf-8') as handle:
+            second = json.load(handle)
+        with open(os.path.join(workdir, "news/3.json"), encoding='utf-8') as handle:
+            third = json.load(handle)
+        self.assertEqual("tag:example.com,2026:c", first["id"])
+        self.assertEqual("tag:example.com,2026:a", second["id"])
+        self.assertEqual("tag:example.com,2026:b", third["id"])
+
     def test_fetch_cached_image_rejects_unsafe_url(self):
         config.load(configfile)
         with self.assertRaises(ValueError):
