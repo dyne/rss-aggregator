@@ -93,6 +93,13 @@
         overflow-wrap: anywhere;
       }
 
+      .news-meta {
+        margin: 0.4rem 0 0;
+        color: var(--text-muted);
+        font-size: 0.84rem;
+        line-height: 1.25;
+      }
+
       @media (max-width: 620px) {
         .news-pill {
           grid-template-columns: 1fr;
@@ -116,8 +123,12 @@
       // Frontend configuration:
       // 1) NEWS_BASE_URL: directory where news-index.json is served.
       // 2) ITEMS_TO_SHOW: desired number of newest entries to display.
+      // 3) SHOW_DATE: show entry date when present.
+      // 4) SHOW_SOURCE: show entry source when present.
       const NEWS_BASE_URL = "http://localhost:8000/output/";
       const ITEMS_TO_SHOW = 10;
+      const SHOW_DATE = false;
+      const SHOW_SOURCE = false;
 
       const statusNode = document.getElementById("news-status");
       const listNode = document.getElementById("news-list");
@@ -172,6 +183,25 @@
         summary.className = "news-summary";
         summary.textContent = entry.summary || "";
         text.appendChild(summary);
+
+        const metaParts = [];
+        if (SHOW_DATE && entry.date) {
+          metaParts.push(String(entry.date));
+        }
+        if (SHOW_SOURCE && entry.source) {
+          if (typeof entry.source === "string") {
+            metaParts.push(entry.source);
+          } else if (typeof entry.source === "object") {
+            metaParts.push(entry.source.title || entry.source.url || entry.source.id || "");
+          }
+        }
+
+        if (metaParts.length > 0) {
+          const meta = document.createElement("p");
+          meta.className = "news-meta";
+          meta.textContent = metaParts.filter(Boolean).join(" \u00b7 ");
+          text.appendChild(meta);
+        }
 
         link.appendChild(text);
         return link;
