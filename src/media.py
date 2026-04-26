@@ -91,6 +91,7 @@ class PageMetadataParser(HTMLParser):
         super().__init__()
         self.base_url = base_url
         self.in_title = False
+        self.seen_head_end = False
         self.title_chunks = []
         self.og_title = None
         self.og_description = None
@@ -130,6 +131,8 @@ class PageMetadataParser(HTMLParser):
             self.title_chunks.append(data)
 
     def handle_endtag(self, tag):
+        if tag == "head":
+            self.seen_head_end = True
         if tag == "title":
             self.in_title = False
 
@@ -155,13 +158,26 @@ def fetch_page_metadata(url, timeout=10):
         raise ValueError("unsafe url")
     request = urllib.request.Request(url, headers={"user-agent": "venus"})
     response = urllib.request.urlopen(request, timeout=timeout)
-    content_type = response.headers.get("content-type", "")
-    if "html" not in content_type:
-        return {"title": None, "summary": None, "image": None}
-    body = net.read_limited_bytes(response, 262144, close=True).decode("utf-8", "replace")
-    parser = PageMetadataParser(url)
-    parser.feed(body)
-    return parser.metadata()
+    try:
+        content_type = response.headers.get("content-type", "")
+        if "html" not in content_type:
+            return {"title": None, "summary": None, "image": None}
+
+        parser = PageMetadataParser(url)
+        total = 0
+        chunk_size = 16384
+        limit = 262144
+        while total < limit:
+            chunk = response.read(min(chunk_size, limit - total))
+            if not chunk:
+                break
+            total += len(chunk)
+            parser.feed(chunk.decode("utf-8", "replace"))
+            if parser.seen_head_end:
+                break
+        return parser.metadata()
+    finally:
+        response.close()
 
 
 def fetch_open_graph_image(url, timeout=10):

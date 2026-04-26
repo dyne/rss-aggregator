@@ -93,6 +93,25 @@ class MediaTest(unittest.TestCase):
             metadata = media.fetch_page_metadata('http://example.com/post')
         self.assertEqual('Canonical og summary', metadata['summary'])
 
+    def test_fetch_page_metadata_parses_head_before_large_body_finishes(self):
+        response = mock.Mock()
+        response.headers.get.return_value = 'text/html; charset=utf-8'
+        response.read.side_effect = [
+            (
+                b'<html><head>'
+                b'<title>Large page</title>'
+                b'<meta name="description" content="Summary from head" />'
+                b'</head><body>'
+            ),
+            b'x' * 16384,
+            b'x' * 16384,
+            b'',
+        ]
+        with mock.patch('urllib.request.urlopen', return_value=response):
+            metadata = media.fetch_page_metadata('http://example.com/post')
+        self.assertEqual('Large page', metadata['title'])
+        self.assertEqual('Summary from head', metadata['summary'])
+
     def test_feed_screenshot_prefers_feed_metadata_over_cache(self):
         feed = {
             'logo': 'http://example.com/logo.png',
