@@ -298,6 +298,77 @@ class OutputTest(unittest.TestCase):
         }))
         self.assertFalse("authors" in json_feed)
 
+    def test_render_news_entry_uses_compact_schema(self):
+        entry = {
+            "id": "tag:example.com,2026:news-1",
+            "updated": "2026-04-24T12:00:00Z",
+            "published": "2026-04-24T11:00:00Z",
+            "title": "News Entry",
+            "summary": "Summary",
+            "content": "<p>Body</p>",
+            "categories": ["alpha", "beta"],
+            "links": [{"rel": "alternate", "href": "http://example.com/post"}],
+            "author": {"name": "Entry Author", "uri": "http://example.com/authors/entry"},
+            "screenshot": "http://example.com/item.png",
+            "source": {
+                "id": "source:news",
+                "title": "News Source",
+                "links": [{"rel": "alternate", "href": "http://example.com/source"}],
+            },
+        }
+        rendered = json.loads(output.render_news_entry(entry))
+        self.assertEqual(
+            {
+                "id": "tag:example.com,2026:news-1",
+                "url": "http://example.com/post",
+                "title": "News Entry",
+                "summary": "Summary",
+                "content": "<p>Body</p>",
+                "source": {
+                    "id": "source:news",
+                    "title": "News Source",
+                    "url": "http://example.com/source",
+                },
+                "author": {
+                    "name": "Entry Author",
+                    "url": "http://example.com/authors/entry",
+                },
+                "date": "2026-04-24T11:00:00Z",
+                "tags": ["alpha", "beta"],
+                "image": {"url": "http://example.com/item.png"},
+            },
+            rendered,
+        )
+        self.assertFalse("version" in rendered)
+        self.assertFalse("items" in rendered)
+
+    def test_render_news_entry_skips_empty_optional_fields(self):
+        entry = {
+            "id": "tag:example.com,2026:news-2",
+            "updated": "2026-04-24T12:00:00Z",
+            "published": None,
+            "title": "News Entry 2",
+            "summary": None,
+            "content": None,
+            "categories": [],
+            "links": [{"rel": "alternate", "href": "http://example.com/post-2"}],
+            "author": {},
+            "screenshot": None,
+            "source": {},
+        }
+        rendered = json.loads(output.render_news_entry(entry))
+        self.assertEqual(
+            {
+                "id": "tag:example.com,2026:news-2",
+                "url": "http://example.com/post-2",
+                "title": "News Entry 2",
+                "summary": None,
+                "date": "2026-04-24T12:00:00Z",
+                "tags": [],
+            },
+            rendered,
+        )
+
     def test_build_feed_model_prefers_link_fallbacks_for_json(self):
         config.load(configfile)
         feed = output.build_feed_model(
