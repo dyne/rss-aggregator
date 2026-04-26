@@ -93,8 +93,6 @@ Below is the maintained set of built-in planet configuration parameters.
 > cache_keep_entries  
 > Used by `expunge` to determine how many entries should be kept for each source when expunging old entries from the cache directory. This may be overriden on a per subscription feed basis.
 >
-> Additional options can be found in [normalization level overrides](normalization.md#overrides).
-
 ### `[DEFAULT]`
 
 Values placed in this section are used as default values for all sections. While it is true that few values make sense in all sections; in most cases unused parameters cause few problems.
@@ -104,9 +102,7 @@ Values placed in this section are used as default values for all sections. While
 All sections other than `planet` or `DEFAULT` are treated as subscriptions and
 typically take the form of a URI.
 
-The most common options here are `name`, content and normalization overrides, and the built-in filtering options `excerpt`, `regexp`, `sed`, and `lemmy`.
-
-[Normalization overrides](normalization.md#overrides) can also be defined here.
+The most common options here are `name` and the built-in filtering options `excerpt`, `regexp`, `sed`, and `lemmy`.
 
 ### Built-in filtering
 

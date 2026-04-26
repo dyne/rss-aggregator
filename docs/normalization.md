@@ -30,19 +30,3 @@ If no [ids](http://www.feedparser.org/docs/reference-entry-id.html) are found in
 - [content](http://www.feedparser.org/docs/reference-entry-content.html)
 
 If no [updated](http://www.feedparser.org/docs/reference-feed-updated.html) dates are found in an entry, the updated date from the feed is used. If no updated date is found in either the feed or the entry, the current time is substituted.
-
-### Overrides
-
-All of the above describes what Venus does automatically, either directly or through its dependencies. There are a number of errors which can not be corrected automatically, and for these, there are configuration parameters that can be used to help.
-
-- `ignore_in_feed` allows you to list any number of elements or attributes which are to be ignored in feeds. This is often handy in the case of feeds where the `author`, `id`, `updated` or `xml:lang` values can't be trusted.
-- `title_type`, `summary_type`, `content_type` allow you to override the [`type`](http://www.feedparser.org/docs/reference-entry-title_detail.html#reference.entry.title_detail.type) attributes on these elements.
-- `name_type` does something similar for [author names](http://www.feedparser.org/docs/reference-entry-author_detail.html#reference.entry.author_detail.name)
-- `future_dates` allows you to specify how to deal with dates which are in the future.
-  - `ignore_date` will cause the date to be ignored (and will therefore default to the time the entry was first seen) until the feed is updated and the time indicated is past, at which point the entry will be updated with the new date.
-  - `ignore_entry` will cause the entire entry containing the future date to be ignored until the date is past.
-  - Anything else (i.e.. the default) will leave the date as is, causing the entries that contain these dates sort to the top of the planet until the time passes.
-- `xml_base` will adjust the `xml:base` values in effect for each of the text constructs in the feed (things like `title`, `summary`, and `content`). Other elements in the feed (most notably, `link` are not affected by this value.
-  - `feed_alternate` will replace the `xml:base` in effect with the value of the `alternate` `link` found either in the enclosed `source` or enclosing `feed` element.
-  - `entry_alternate` will replace the `xml:base` in effect with the value of the `alternate` `link` found in this entry.
-  - Any other value will be treated as a [URI reference](http://www.ietf.org/rfc/rfc3986.txt). These values may be relative or absolute. If relative, the `xml:base` values in each text construct will each be adjusted separately using to the specified value.
