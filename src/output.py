@@ -3,12 +3,14 @@
 import json
 import os
 import calendar
+import hashlib
 import urllib.parse
+import urllib.request
 from email.utils import formatdate
 from xml.dom import minidom
 from xml.sax.saxutils import escape
 
-from . import config, media
+from . import config, media, net
 
 RSS_OUTPUT_NAME = "news.xml"
 NEWS_DIR_NAME = "news"
@@ -16,6 +18,105 @@ NEWS_INDEX_NAME = "news-index.json"
 JSON_OUTPUT_NAME = NEWS_INDEX_NAME
 OUTPUT_FILE_NAMES = (RSS_OUTPUT_NAME, JSON_OUTPUT_NAME)
 LEGACY_OUTPUT_FILE_NAMES = ("rss.xml", "feed.json")
+IMAGE_CACHE_DIR_NAME = "images"
+MAX_IMAGE_DOWNLOAD_BYTES = 8 * 1024 * 1024
+MAX_IMAGE_EMBED_BYTES = 1 * 1024 * 1024
+
+
+def image_cache_directory():
+    """Return the cache directory used for downloaded entry images."""
+    path = os.path.join(config.cache_directory(), IMAGE_CACHE_DIR_NAME)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def image_cache_key(url):
+    """Return a deterministic cache key for one image URL."""
+    return hashlib.sha256(url.encode("utf-8")).hexdigest()
+
+
+def _image_cache_paths(url):
+    key = image_cache_key(url)
+    directory = image_cache_directory()
+    return (
+        os.path.join(directory, key + ".img"),
+        os.path.join(directory, key + ".json"),
+    )
+
+
+def validate_image_bytes(body):
+    """Detect a supported image MIME type from raw bytes."""
+    if not body:
+        return None
+    if body.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if body.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if body.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if len(body) >= 12 and body[:4] == b"RIFF" and body[8:12] == b"WEBP":
+        return "image/webp"
+    if len(body) >= 16 and body[4:8] == b"ftyp" and b"avif" in body[8:16]:
+        return "image/avif"
+    return None
+
+
+def _load_cached_image(url):
+    image_path, meta_path = _image_cache_paths(url)
+    if not (os.path.isfile(image_path) and os.path.isfile(meta_path)):
+        return None
+    try:
+        with open(image_path, "rb") as handle:
+            body = handle.read()
+        with open(meta_path, "r", encoding="utf-8") as handle:
+            metadata = json.load(handle)
+    except (OSError, ValueError):
+        return None
+    mime_type = validate_image_bytes(body)
+    if not mime_type:
+        return None
+    return {
+        "url": url,
+        "path": image_path,
+        "mime_type": metadata.get("mime_type") or mime_type,
+        "size": len(body),
+    }
+
+
+def fetch_cached_image(url, timeout=10):
+    """Fetch one image URL to cache and return local metadata."""
+    if not media.safe_public_http_url(url):
+        raise ValueError("unsafe image url")
+    cached = _load_cached_image(url)
+    if cached:
+        return cached
+
+    request = urllib.request.Request(url, headers={"user-agent": "venus"})
+    response = urllib.request.urlopen(request, timeout=timeout)
+    body = net.read_limited_bytes(response, MAX_IMAGE_DOWNLOAD_BYTES, close=True)
+    mime_type = validate_image_bytes(body)
+    if not mime_type:
+        raise ValueError("invalid image payload")
+
+    image_path, meta_path = _image_cache_paths(url)
+    with open(image_path, "wb") as handle:
+        handle.write(body)
+    with open(meta_path, "w", encoding="utf-8") as handle:
+        json.dump(
+            {
+                "url": url,
+                "mime_type": mime_type,
+                "size": len(body),
+            },
+            handle,
+            ensure_ascii=False,
+        )
+    return {
+        "url": url,
+        "path": image_path,
+        "mime_type": mime_type,
+        "size": len(body),
+    }
 
 
 def _direct_children(node, name):

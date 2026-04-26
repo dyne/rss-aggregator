@@ -4,9 +4,10 @@ import json
 import os
 import shutil
 import unittest
+from unittest import mock
 from xml.dom import minidom
 
-from src import config, output, splice
+from src import config, net, output, splice
 
 workdir = 'tests/work/apply'
 configfile = 'tests/data/apply/config-asf.ini'
@@ -485,3 +486,60 @@ class OutputTest(unittest.TestCase):
         self.assertTrue(os.path.exists(keep_path))
         self.assertTrue(os.path.exists(os.path.join(news_dir, "1.json")))
         self.assertFalse(os.path.exists(os.path.join(news_dir, "2.json")))
+
+    def test_fetch_cached_image_rejects_unsafe_url(self):
+        config.load(configfile)
+        with self.assertRaises(ValueError):
+            output.fetch_cached_image("file:///tmp/blocked.png")
+
+    def test_fetch_cached_image_rejects_invalid_payload(self):
+        config.load(configfile)
+
+        class _Response:
+            def read(self, _size):
+                return b"not-an-image"
+
+            def close(self):
+                return None
+
+        with mock.patch("src.output.urllib.request.urlopen", return_value=_Response()):
+            with self.assertRaises(ValueError):
+                output.fetch_cached_image("http://example.com/file.bin")
+
+    def test_fetch_cached_image_rejects_oversized_response(self):
+        config.load(configfile)
+
+        class _Response:
+            def read(self, _size):
+                return b"x" * (output.MAX_IMAGE_DOWNLOAD_BYTES + 1)
+
+            def close(self):
+                return None
+
+        with mock.patch("src.output.urllib.request.urlopen", return_value=_Response()):
+            with self.assertRaises(net.ResponseTooLarge):
+                output.fetch_cached_image("http://example.com/big.png")
+
+    def test_fetch_cached_image_uses_cache_after_first_download(self):
+        config.load(configfile)
+        png_bytes = b"\x89PNG\r\n\x1a\n" + b"x" * 32
+        calls = {"count": 0}
+
+        class _Response:
+            def read(self, _size):
+                return png_bytes
+
+            def close(self):
+                return None
+
+        def _fake_urlopen(_request, timeout=10):
+            calls["count"] += 1
+            return _Response()
+
+        with mock.patch("src.output.urllib.request.urlopen", side_effect=_fake_urlopen):
+            first = output.fetch_cached_image("http://example.com/pic.png")
+            second = output.fetch_cached_image("http://example.com/pic.png")
+
+        self.assertEqual(1, calls["count"])
+        self.assertEqual(first["path"], second["path"])
+        self.assertEqual("image/png", first["mime_type"])
