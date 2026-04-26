@@ -31,7 +31,7 @@ Below is the maintained set of built-in planet configuration parameters.
 > Where cached feeds are stored
 >
 > output_dir  
-> Directory where Venus writes `news.xml`, `news-index.json`, and numbered `news/*.json` entries
+> Directory where Venus writes output feeds
 >
 > <!-- -->
 >

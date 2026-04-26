@@ -10,8 +10,8 @@ Install the locked Python dependencies from the checkout with uv:
 
 The maintained runtime supports the in-tree `planet.py` command and the
 packaged `rss-aggregator` console script. Both read one local INI file, fetch
-feeds, write `news.xml`, `news-index.json`, and numbered `news/*.json`
-entries, and exit. List subscriptions directly in that file; the maintained
+feeds, write output feeds (`news.xml`, `news-index.json`, and numbered
+`news/*.json` entries), and exit. List subscriptions directly in that file; the maintained
 runtime does not load OPML, CSV, or remote config sources. It does not require
 optional template engines or XSLT tooling. If you use the built-in `sed`
 cleanup option, make sure your system `sed` command is available.
@@ -30,7 +30,7 @@ These instructions apply to any platform. Check the instructions below for more 
 
 3.  Make a copy of one of the `ini` the files in the [examples](../examples) subdirectory, and put it wherever you like; I like to use the Planet's name (so `~/planet/debian`), but it's really up to you.
 
-4.  Edit the `config.ini` file in this directory to taste, it's pretty well documented so you shouldn't have any problems here. Pay particular attention to the `output_dir` option, which should be readable by your web server. Venus will write `news.xml`, `news-index.json`, and numbered `news/*.json` files there. If the directory you specify in your `cache_dir` exists; make sure that it is empty.
+4.  Edit the `config.ini` file in this directory to taste, it's pretty well documented so you shouldn't have any problems here. Pay particular attention to the `output_dir` option, which should be readable by your web server. Venus will write output feeds there. If the directory you specify in your `cache_dir` exists; make sure that it is empty.
 
 5.  Run it: `uv run python planet.py pathto/config.ini`
 
