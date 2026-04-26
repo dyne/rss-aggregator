@@ -14,6 +14,8 @@ One JSON file per entry (`news/1.json`, `news/2.json`, ...), ordered newest-firs
 No additional publish step runs after these files are written. A `planet.py`
 or `rss-aggregator` run finishes once the built-in outputs have been generated.
 
+For a tiny static client example that reads `news-index.json` and renders numbered entries, see [frontend/minimal](../frontend/minimal/README.md).
+
 ### Numbered JSON schema
 
 `news-index.json` has this shape:
