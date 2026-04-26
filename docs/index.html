@@ -114,7 +114,7 @@
   </head>
   <body>
     <main>
-      <h1>News</h1>
+      <h1>RSS-Aggregator demo site</h1>
       <p id="news-status" aria-live="polite"></p>
       <div id="news-list"></div>
     </main>
@@ -125,10 +125,10 @@
       // 2) ITEMS_TO_SHOW: desired number of newest entries to display.
       // 3) SHOW_DATE: show entry date when present.
       // 4) SHOW_SOURCE: show entry source when present.
-      const NEWS_BASE_URL = "http://localhost:8000/output/";
-      const ITEMS_TO_SHOW = 10;
-      const SHOW_DATE = false;
-      const SHOW_SOURCE = false;
+      const NEWS_BASE_URL = "https://feed.planb.dyne.org/cybersecurity";
+      const ITEMS_TO_SHOW = 20;
+      const SHOW_DATE = true;
+      const SHOW_SOURCE = true;
 
       const statusNode = document.getElementById("news-status");
       const listNode = document.getElementById("news-list");

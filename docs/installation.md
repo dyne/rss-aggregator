@@ -40,7 +40,3 @@ These instructions apply to any platform. Check the instructions below for more 
     > `uvx --from ./dist/rss_aggregator-3.0.0-py3-none-any.whl rss-aggregator pathto/config.ini`
 
     You'll want to add this to cron, make sure you run it from the right directory.
-
-6.  (Optional)
-
-    Tell us about it! We'd love to link to you on planetplanet.org :-)
