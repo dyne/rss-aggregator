@@ -84,44 +84,78 @@ def first_image_from_html(value, base_url=None):
     return url
 
 
-class OpenGraphParser(HTMLParser):
-    """Collect the first useful image candidate from HTML metadata."""
+class PageMetadataParser(HTMLParser):
+    """Collect useful title, description, and image metadata from HTML."""
 
     def __init__(self, base_url):
         super().__init__()
         self.base_url = base_url
+        self.in_title = False
+        self.title_chunks = []
+        self.og_title = None
+        self.description = None
         self.image = None
 
     def handle_starttag(self, tag, attrs):
-        if self.image:
-            return
         attrs = dict(attrs)
+        if tag == "title":
+            self.in_title = True
         if tag == "meta":
-            prop = attrs.get("property") or attrs.get("name")
-            if prop in ("og:image", "twitter:image", "twitter:image:src"):
-                content = attrs.get("content")
-                if content:
-                    self.image = urllib.parse.urljoin(self.base_url, content)
+            prop = (attrs.get("property") or attrs.get("name") or "").lower()
+            content = attrs.get("content")
+            if not content:
+                return
+            if prop in ("og:title", "twitter:title") and not self.og_title:
+                self.og_title = content
+            elif prop in ("og:description", "twitter:description", "description"):
+                if not self.description:
+                    self.description = content
+            elif prop in ("og:image", "twitter:image", "twitter:image:src") and not self.image:
+                self.image = urllib.parse.urljoin(self.base_url, content)
         elif tag == "link":
+            if self.image:
+                return
             rel = attrs.get("rel", "").lower()
             href = attrs.get("href")
             if href and rel in ("icon", "shortcut icon", "apple-touch-icon"):
                 self.image = urllib.parse.urljoin(self.base_url, href)
 
+    def handle_data(self, data):
+        if self.in_title:
+            self.title_chunks.append(data)
 
-def fetch_open_graph_image(url, timeout=10):
-    """Fetch one source page and return its first useful image metadata URL."""
+    def handle_endtag(self, tag):
+        if tag == "title":
+            self.in_title = False
+
+    def metadata(self):
+        """Return normalized page metadata parsed from one HTML response."""
+        title = self.og_title or "".join(self.title_chunks).strip() or None
+        return {
+            "title": title,
+            "summary": self.description or None,
+            "image": self.image,
+        }
+
+
+def fetch_page_metadata(url, timeout=10):
+    """Fetch one public page and return its title, description, and image."""
     if not safe_public_http_url(url):
         raise ValueError("unsafe url")
     request = urllib.request.Request(url, headers={"user-agent": "venus"})
     response = urllib.request.urlopen(request, timeout=timeout)
     content_type = response.headers.get("content-type", "")
     if "html" not in content_type:
-        return None
+        return {"title": None, "summary": None, "image": None}
     body = net.read_limited_bytes(response, 262144, close=True).decode("utf-8", "replace")
-    parser = OpenGraphParser(url)
+    parser = PageMetadataParser(url)
     parser.feed(body)
-    return parser.image
+    return parser.metadata()
+
+
+def fetch_open_graph_image(url, timeout=10):
+    """Fetch one source page and return its first useful image metadata URL."""
+    return fetch_page_metadata(url, timeout=timeout).get("image")
 
 
 def feed_homepage(feed):
