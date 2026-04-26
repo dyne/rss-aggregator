@@ -37,7 +37,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(['feed1', 'feed2'], feeds)
 
     def test_feed(self):
-        self.assertEqual('http://example.com/rss.xml', config.feed())
+        self.assertEqual('http://example.com/news.xml', config.feed())
         self.assertEqual('rss', config.feedtype())
 
     # planet wide configuration
@@ -114,7 +114,7 @@ class ConfigTest(unittest.TestCase):
             'name = one\n'
         )
         config.load(path)
-        self.assertEqual('http://example.com/site/rss.xml', config.feed())
+        self.assertEqual('http://example.com/site/news.xml', config.feed())
         self.assertEqual('rss', config.feedtype())
 
         path = self.write_config(

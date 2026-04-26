@@ -55,10 +55,10 @@ class OutputTest(unittest.TestCase):
             feed['items'][0]['_source']['title'])
 
     def test_output_names_are_fixed_constants(self):
-        self.assertEqual('rss.xml', output.RSS_OUTPUT_NAME)
+        self.assertEqual('news.xml', output.RSS_OUTPUT_NAME)
         self.assertEqual('feed.json', output.JSON_OUTPUT_NAME)
         self.assertEqual(
-            ('rss.xml', 'feed.json'),
+            ('news.xml', 'feed.json'),
             output.OUTPUT_FILE_NAMES)
 
     def test_build_feed_model_centralizes_output_fields(self):
