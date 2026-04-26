@@ -93,7 +93,9 @@ class PageMetadataParser(HTMLParser):
         self.in_title = False
         self.title_chunks = []
         self.og_title = None
-        self.description = None
+        self.og_description = None
+        self.meta_description = None
+        self.twitter_description = None
         self.image = None
 
     def handle_starttag(self, tag, attrs):
@@ -107,9 +109,12 @@ class PageMetadataParser(HTMLParser):
                 return
             if prop in ("og:title", "twitter:title") and not self.og_title:
                 self.og_title = content
-            elif prop in ("og:description", "twitter:description", "description"):
-                if not self.description:
-                    self.description = content
+            elif prop == "og:description" and not self.og_description:
+                self.og_description = content
+            elif prop == "twitter:description" and not self.twitter_description:
+                self.twitter_description = content
+            elif prop in ("description", "itemprop:description") and not self.meta_description:
+                self.meta_description = content
             elif prop in ("og:image", "twitter:image", "twitter:image:src") and not self.image:
                 self.image = urllib.parse.urljoin(self.base_url, content)
         elif tag == "link":
@@ -131,9 +136,15 @@ class PageMetadataParser(HTMLParser):
     def metadata(self):
         """Return normalized page metadata parsed from one HTML response."""
         title = self.og_title or "".join(self.title_chunks).strip() or None
+        summary = (
+            self.og_description
+            or self.twitter_description
+            or self.meta_description
+            or None
+        )
         return {
             "title": title,
-            "summary": self.description or None,
+            "summary": summary,
             "image": self.image,
         }
 

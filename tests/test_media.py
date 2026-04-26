@@ -77,6 +77,22 @@ class MediaTest(unittest.TestCase):
         self.assertEqual('Short summary', metadata['summary'])
         self.assertEqual('http://example.com/cover.png', metadata['image'])
 
+    def test_fetch_page_metadata_prefers_og_description_over_meta_description(self):
+        response = mock.Mock()
+        response.headers.get.return_value = 'text/html; charset=utf-8'
+        response.read.side_effect = [
+            (
+                b'<html><head>'
+                b'<meta name="description" content="Plain summary" />'
+                b'<meta property="og:description" content="Canonical og summary" />'
+                b'</head><body></body></html>'
+            ),
+            b'',
+        ]
+        with mock.patch('urllib.request.urlopen', return_value=response):
+            metadata = media.fetch_page_metadata('http://example.com/post')
+        self.assertEqual('Canonical og summary', metadata['summary'])
+
     def test_feed_screenshot_prefers_feed_metadata_over_cache(self):
         feed = {
             'logo': 'http://example.com/logo.png',
