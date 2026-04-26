@@ -4,7 +4,7 @@ Current Venus keeps the feed aggregation model, but simplifies the output surfac
 
 - You will need to start over with a new cache directory as the format of the cache has changed dramatically.
 - Template and theme settings such as `output_theme`, `template_files`, and `template_directories` are gone.
-- Venus now writes built-in `news.xml`, `news-index.json`, and numbered `news/*.json` files into `output_dir`.
+- Venus now writes output feeds into `output_dir`.
 - Old theme files, `.tmpl` files, and Django or Genshi output templates are no longer part of the maintained product.
 - Venus now requires Python 3.9 or newer.
 - Generic filter lists and per-filter sections are gone. Migrate filtering to the built-in `excerpt`, `regexp`, and `sed` options.
