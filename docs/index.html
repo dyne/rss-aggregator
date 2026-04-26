@@ -137,6 +137,14 @@
         statusNode.textContent = message;
       }
 
+      function asDirectoryBaseUrl(rawUrl) {
+        const value = String(rawUrl || "").trim();
+        if (!value) {
+          throw new Error("NEWS_BASE_URL is empty");
+        }
+        return value.endsWith("/") ? value : value + "/";
+      }
+
       async function fetchJson(url) {
         const response = await fetch(url);
         if (!response.ok) {
@@ -208,7 +216,7 @@
       }
 
       async function loadNews() {
-        const indexUrl = new URL("news-index.json", NEWS_BASE_URL);
+        const indexUrl = new URL("news-index.json", asDirectoryBaseUrl(NEWS_BASE_URL));
         const index = await fetchJson(indexUrl);
 
         if (typeof index.total !== "number" || !Array.isArray(index.urls)) {
