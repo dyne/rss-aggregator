@@ -1,28 +1,67 @@
 ## Output Files
 
-Venus writes two built-in files into `output_dir` on every successful run:
+Venus writes a fixed built-in output set into `output_dir` on every successful run:
 
-`rss.xml`  
+`news.xml`  
 The aggregated RSS feed. This is the canonical syndication output.
 
-`feed.json`  
-A JSON Feed style document for applications and downstream tooling. It includes item attachments, source metadata, and screenshots when available.
+`news-index.json`  
+A compact JSON manifest used by clients to discover numbered entry files without downloading all entries at once.
+
+`news/{n}.json`  
+One JSON file per entry (`news/1.json`, `news/2.json`, ...), ordered newest-first.
 
 No additional publish step runs after these files are written. A `planet.py`
 or `rss-aggregator` run finishes once the built-in outputs have been generated.
 
-### What metadata is preserved
+### Numbered JSON schema
 
-The built-in writers preserve the normalized aggregate feed title, link, owner metadata, entry titles, summaries, content, links, categories, authors, enclosures, and source information. Venus also carries source screenshots when they can be derived from feed metadata such as `logo` or `icon`, or from a limited Open Graph lookup of the source page.
+`news-index.json` has this shape:
 
-### JSON HTML boundary
+```json
+{
+  "total": 2,
+  "urls": ["news/1.json", "news/2.json"]
+}
+```
 
-`feed.json` includes `content_html` values derived from subscribed feeds after Venus sanitization. This is safe as static JSON output, but downstream consumers still decide how to render that HTML.
+Each numbered entry keeps the normalized per-item data:
 
-- Render `content_html` only in contexts where sanitized feed HTML is acceptable.
-- If a client needs plain text, strip tags or ignore `content_html`.
-- Serve `feed.json` with `application/feed+json` or `application/json` where deployment controls response headers.
+```json
+{
+  "id": "tag:example.com,2026:1",
+  "url": "https://example.com/article",
+  "title": "Example title",
+  "summary": "Plain-text summary",
+  "content": "Optional plain-text content",
+  "image": {
+    "url": "https://example.com/image.jpg",
+    "mime_type": "image/jpeg",
+    "data_base64": "..."
+  },
+  "source": "https://feed.example.org/rss.xml",
+  "author": "Author name",
+  "date": "2026-04-24T03:06:51Z",
+  "tags": ["security"]
+}
+```
+
+Fields are omitted when unavailable. `summary` and `content` are plain text in the JSON output.
+
+### Image embedding and cache behavior
+
+For each entry image URL, Venus first downloads to cache, validates the payload as an image, and then decides embedding:
+
+- If validated size is `<= 1 MiB`, numbered JSON includes inline `image.data_base64` and `image.mime_type`.
+- If validated size is `> 1 MiB`, numbered JSON keeps URL-only image metadata.
+- If download or validation fails, numbered JSON keeps URL-only image metadata.
+
+Image cache files are kept under `output_dir/images/`.
+
+### Renumbering behavior
+
+Numbered files are always rewritten newest-first. When fresher entries arrive, existing entry numbers shift (`news/1.json` becomes older items at `news/2.json`, etc.), and stale numeric files are removed.
 
 ### No theme selection
 
-Older Venus releases could render multiple themed outputs through template engines. The maintained output model is now fixed: one RSS file and one JSON file. Output customization happens by changing normalized feed data through the built-in filtering options, not by choosing a theme.
+Older Venus releases could render multiple themed outputs through template engines. The maintained output model is now fixed: one RSS file (`news.xml`) plus indexed numbered JSON files. Output customization happens by changing normalized feed data through the built-in filtering options, not by choosing a theme.
