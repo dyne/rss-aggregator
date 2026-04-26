@@ -13,6 +13,7 @@ from . import config, media
 RSS_OUTPUT_NAME = "news.xml"
 JSON_OUTPUT_NAME = "feed.json"
 OUTPUT_FILE_NAMES = (RSS_OUTPUT_NAME, JSON_OUTPUT_NAME)
+LEGACY_OUTPUT_FILE_NAMES = ("rss.xml", "feed.json")
 
 
 def _direct_children(node, name):
@@ -372,6 +373,14 @@ def write_outputs(doc):
     feed = build_feed_model(doc)
     output_dir = config.output_dir()
     os.makedirs(output_dir, exist_ok=True)
+
+    # Remove legacy maintained files that are no longer current outputs.
+    for legacy_name in LEGACY_OUTPUT_FILE_NAMES:
+        if legacy_name in OUTPUT_FILE_NAMES:
+            continue
+        legacy_path = os.path.join(output_dir, legacy_name)
+        if os.path.isfile(legacy_path):
+            os.remove(legacy_path)
 
     rss_path = os.path.join(output_dir, RSS_OUTPUT_NAME)
     with open(rss_path, "w", encoding="utf-8") as handle:

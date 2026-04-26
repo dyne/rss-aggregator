@@ -60,6 +60,9 @@ class OutputTest(unittest.TestCase):
         self.assertEqual(
             ('news.xml', 'feed.json'),
             output.OUTPUT_FILE_NAMES)
+        self.assertEqual(
+            ('rss.xml', 'feed.json'),
+            output.LEGACY_OUTPUT_FILE_NAMES)
 
     def test_build_feed_model_centralizes_output_fields(self):
         config.load(configfile)
@@ -343,3 +346,19 @@ class OutputTest(unittest.TestCase):
         self.assertEqual(
             "safe ]]> break",
             encoded_payload)
+
+    def test_apply_removes_stale_legacy_output_files_only(self):
+        config.load(configfile)
+        stale_rss_path = os.path.join(workdir, "rss.xml")
+        keep_path = os.path.join(workdir, "unrelated.txt")
+        with open(stale_rss_path, "w", encoding="utf-8") as handle:
+            handle.write("old")
+        with open(keep_path, "w", encoding="utf-8") as handle:
+            handle.write("keep")
+
+        splice.apply(self.feeddata)
+
+        self.assertFalse(os.path.exists(stale_rss_path))
+        self.assertTrue(os.path.exists(keep_path))
+        self.assertTrue(os.path.exists(os.path.join(workdir, output.RSS_OUTPUT_NAME)))
+        self.assertTrue(os.path.exists(os.path.join(workdir, output.JSON_OUTPUT_NAME)))
