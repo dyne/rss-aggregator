@@ -152,6 +152,8 @@ def rewrite_entry(entry, metadata_fetcher=None):
     image_url = metadata.get("image")
     if image_url and not media.safe_public_http_url(image_url):
         image_url = None
+    if not image_url:
+        image_url = media.entry_image_from_media_content(entry)
 
     entry["id"] = upstream_url
     entry["link"] = upstream_url

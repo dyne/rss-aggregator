@@ -155,6 +155,16 @@ class MediaTest(unittest.TestCase):
         self.assertEqual('http://example.com/source.png',
             media.entry_screenshot({'links': []}, source))
 
+    def test_entry_screenshot_uses_media_content_image_before_html(self):
+        entry = {
+            'links': [],
+            'media_content': [
+                {'medium': 'image', 'url': 'http://example.com/media-cover.jpg'},
+            ],
+            'content_detail': {'value': '<p><img src="inline.png" /></p>', 'base': 'http://example.com/post'},
+        }
+        self.assertEqual('http://example.com/media-cover.jpg', media.entry_screenshot(entry, {}))
+
     def test_looks_like_image_uses_mime_and_extension(self):
         self.assertTrue(media.looks_like_image('http://example.com/asset', 'image/webp'))
         self.assertTrue(media.looks_like_image('http://example.com/asset.JPG'))

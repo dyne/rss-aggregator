@@ -240,6 +240,18 @@ def entry_image_from_enclosures(entry):
     return None
 
 
+def entry_image_from_media_content(entry):
+    """Return the first image URL exposed through media:content metadata."""
+    for media_content in entry.get("media_content", []):
+        href = media_content.get("url")
+        if not href:
+            continue
+        medium = media_content.get("medium")
+        if medium == "image" or looks_like_image(href, media_content.get("type")):
+            return href
+    return None
+
+
 def entry_image_from_html(entry):
     """Return the first inline HTML image URL for one entry."""
     for detail_name in ("content_detail", "summary_detail", "title_detail"):
@@ -267,11 +279,13 @@ def source_fallback_screenshot(source):
 def entry_screenshot(entry, source=None):
     """Choose the best image for one entry.
 
-    The precedence is fixed and tested: image enclosure, first inline HTML
-    image from content/summary/title, then the source-level screenshot.
+    The precedence is fixed and tested: image enclosure, media:content image,
+    first inline HTML image from content/summary/title, then the source-level
+    screenshot.
     """
     return (
         entry_image_from_enclosures(entry)
+        or entry_image_from_media_content(entry)
         or entry_image_from_html(entry)
         or source_fallback_screenshot(source)
     )

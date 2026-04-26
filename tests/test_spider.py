@@ -129,7 +129,7 @@ class SpiderTest(unittest.TestCase):
         config.parser.set(feed_uri, 'lemmy', 'true')
         feed_info = feedparser.parse('<feed/>')
         data = feedparser.parse("""\
-        <rss version="2.0">
+        <rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
           <channel>
             <title>fed.dyne.org - cybersec</title>
             <link>https://fed.dyne.org/c/cybersec</link>
@@ -141,6 +141,7 @@ class SpiderTest(unittest.TestCase):
               <description><![CDATA[<div>submitted by <a href="https://fed.dyne.org/u/jaromil">jaromil</a> to <a href="https://fed.dyne.org/c/cybersec">cybersec</a><br/>8 points | <a href="https://fed.dyne.org/post/984420">0 comments</a><br/><a href="https://citizenlab.ca/research/uncovering-global-telecom-exploitation-by-covert-surveillance-actors/">https://citizenlab.ca/research/uncovering-global-telecom-exploitation-by-covert-surveillance-actors/</a></div>]]></description>
               <author>https://fed.dyne.org/u/jaromil</author>
               <enclosure url="https://citizenlab.ca/research/uncovering-global-telecom-exploitation-by-covert-surveillance-actors/" type="text/html; charset=utf-8" length="0" />
+              <media:content medium="image" url="https://fed.dyne.org/pictrs/image/example-cover.png" />
             </item>
           </channel>
         </rss>
@@ -164,6 +165,42 @@ class SpiderTest(unittest.TestCase):
         self.assertEqual(metadata['summary'], cached.summary)
         self.assertFalse('submitted by' in cached.summary)
         self.assertEqual('https://citizenlab.ca/assets/cover.png', cached.links[1].href)
+
+    def test_spiderFeed_uses_lemmy_media_content_image_when_upstream_has_none(self):
+        feed_uri = 'https://fed.dyne.org/feeds/c/cybersec.xml?sort=New'
+        config.load(configfile)
+        config.parser.add_section(feed_uri)
+        config.parser.set(feed_uri, 'name', 'cybersec')
+        config.parser.set(feed_uri, 'lemmy', 'true')
+        feed_info = feedparser.parse('<feed/>')
+        data = feedparser.parse("""\
+        <rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+          <channel>
+            <title>fed.dyne.org - cybersec</title>
+            <link>https://fed.dyne.org/c/cybersec</link>
+            <item>
+              <title>The Citizen Lab Bad Connection</title>
+              <link>https://fed.dyne.org/post/984420</link>
+              <guid isPermaLink="true">https://fed.dyne.org/post/984420</guid>
+              <pubDate>Fri, 24 Apr 2026 03:06:51 GMT</pubDate>
+              <description><![CDATA[<div>submitted by <a href="https://fed.dyne.org/u/jaromil">jaromil</a> to <a href="https://fed.dyne.org/c/cybersec">cybersec</a><br/>8 points | <a href="https://fed.dyne.org/post/984420">0 comments</a><br/><a href="https://citizenlab.ca/research/uncovering-global-telecom-exploitation-by-covert-surveillance-actors/">https://citizenlab.ca/research/uncovering-global-telecom-exploitation-by-covert-surveillance-actors/</a></div>]]></description>
+              <media:content medium="image" url="https://fed.dyne.org/pictrs/image/example-cover.png" />
+            </item>
+          </channel>
+        </rss>
+        """)
+        metadata = {
+            'title': 'Bad Connection: Uncovering Global Telecom Exploitation',
+            'summary': 'Citizen Lab tracks covert telecom surveillance operations.',
+            'image': None,
+        }
+        with mock.patch('src.lemmy.media.fetch_page_metadata', return_value=metadata):
+            writeCache(feed_uri, feed_info, data)
+
+        files = self.cache_items()
+        entry_path = [path for path in files if os.path.basename(path) != 'sources'][0]
+        cached = feedparser.parse(entry_path).entries[0]
+        self.assertEqual('https://fed.dyne.org/pictrs/image/example-cover.png', cached.links[1].href)
 
     def test_spiderUpdate(self):
         config.load(configfile)
