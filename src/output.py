@@ -9,6 +9,8 @@ import urllib.parse
 import urllib.request
 import time
 from email.utils import formatdate
+from html import unescape
+from html.parser import HTMLParser
 from xml.dom import minidom
 from xml.sax.saxutils import escape
 
@@ -23,6 +25,38 @@ LEGACY_OUTPUT_FILE_NAMES = ("rss.xml", "feed.json")
 IMAGE_CACHE_DIR_NAME = "images"
 MAX_IMAGE_DOWNLOAD_BYTES = 8 * 1024 * 1024
 MAX_IMAGE_EMBED_BYTES = 1 * 1024 * 1024
+HTML_TEXT_BREAK_TAGS = {"br", "div", "p", "li", "tr"}
+
+
+class _HtmlTextRenderer(HTMLParser):
+    """Render a small HTML fragment to readable plain text."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+
+    def _break(self):
+        if self.parts and not self.parts[-1].endswith((" ", "\n")):
+            self.parts.append("\n")
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() in HTML_TEXT_BREAK_TAGS:
+            self._break()
+
+    def handle_startendtag(self, tag, attrs):
+        if tag.lower() in HTML_TEXT_BREAK_TAGS:
+            self._break()
+
+    def handle_endtag(self, tag):
+        if tag.lower() in HTML_TEXT_BREAK_TAGS:
+            self._break()
+
+    def handle_data(self, data):
+        if data:
+            self.parts.append(data)
+
+    def text(self):
+        return " ".join("".join(self.parts).split()) or None
 
 
 def image_cache_directory():
@@ -150,14 +184,38 @@ def _child_xml(node):
     return "".join(child.toxml() for child in node.childNodes)
 
 
+def _looks_like_html(value):
+    """Return True when a text value appears to contain embedded markup."""
+    return bool(value and "<" in value and ">" in value)
+
+
+def _render_html_text(value):
+    """Render HTML markup to compact plain text for external outputs."""
+    parser = _HtmlTextRenderer()
+    parser.feed(value)
+    parser.close()
+    return parser.text()
+
+
+def _render_content_text(value, content_type):
+    """Return a content field as rendered text instead of raw HTML markup."""
+    if not value:
+        return None
+    decoded = unescape(value)
+    if content_type in ("html", "xhtml", "text/html") or _looks_like_html(decoded):
+        return _render_html_text(decoded)
+    return decoded
+
+
 def _content_payload(node, name):
     element = _first_child(node, name)
     if element is None:
         return None, None
+    content_type = element.getAttribute("type") or "text"
     payload = _child_xml(element)
     if not payload:
         payload = _text(element)
-    return payload, element.getAttribute("type") or "text"
+    return _render_content_text(payload, content_type), content_type
 
 
 def _links(node):
