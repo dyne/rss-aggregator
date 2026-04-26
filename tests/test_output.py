@@ -63,6 +63,10 @@ class OutputTest(unittest.TestCase):
         self.assertEqual(
             ('rss.xml', 'feed.json'),
             output.LEGACY_OUTPUT_FILE_NAMES)
+        self.assertEqual('news', output.NEWS_DIR_NAME)
+        self.assertEqual('news-index.json', output.NEWS_INDEX_NAME)
+        self.assertEqual('1.json', output.news_entry_name(1))
+        self.assertEqual('news/3.json', output.news_entry_relative_url(3))
 
     def test_build_feed_model_centralizes_output_fields(self):
         config.load(configfile)
