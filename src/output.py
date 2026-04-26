@@ -249,6 +249,70 @@ def _json_item(entry):
     return item
 
 
+def _news_source(source):
+    """Build the compact source object for one numbered news entry."""
+    payload = {
+        "id": source.get("id"),
+        "title": source.get("title"),
+        "url": _alternate_url(source.get("links", [])),
+    }
+    return {key: value for key, value in payload.items() if value}
+
+
+def _news_author(author):
+    """Build the compact author object for one numbered news entry."""
+    payload = {
+        "name": author.get("name"),
+        "url": author.get("uri"),
+    }
+    return {key: value for key, value in payload.items() if value}
+
+
+def _news_image(entry, image_loader=None):
+    """Build one compact image object for one numbered news entry."""
+    image_url = entry.get("screenshot")
+    if not image_url:
+        return None
+    if image_loader:
+        image = image_loader(image_url)
+        if image:
+            return image
+    return {"url": image_url}
+
+
+def _news_entry_dict(entry, image_loader=None):
+    """Build the compact entry payload for one numbered news JSON file."""
+    payload = {
+        "id": entry["id"],
+        "url": _alternate_url(entry["links"]),
+        "title": entry["title"],
+        "summary": entry["summary"],
+        "date": entry["published"] or entry["updated"],
+        "tags": entry["categories"],
+    }
+    if entry.get("content"):
+        payload["content"] = entry["content"]
+    source = _news_source(entry.get("source") or {})
+    if source:
+        payload["source"] = source
+    author = _news_author(entry.get("author") or {})
+    if author:
+        payload["author"] = author
+    image = _news_image(entry, image_loader=image_loader)
+    if image:
+        payload["image"] = image
+    return payload
+
+
+def render_news_entry(entry, image_loader=None):
+    """Render one compact numbered-news entry as JSON text."""
+    return json.dumps(
+        _news_entry_dict(entry, image_loader=image_loader),
+        indent=2,
+        ensure_ascii=False,
+    ) + "\n"
+
+
 def _build_feed_dict(doc):
     """Build the intermediate feed model shared by RSS and JSON serializers."""
     feed = doc.documentElement
