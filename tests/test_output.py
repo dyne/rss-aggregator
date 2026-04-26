@@ -34,9 +34,11 @@ class OutputTest(unittest.TestCase):
 
         rss_path = os.path.join(workdir, output.RSS_OUTPUT_NAME)
         json_path = os.path.join(workdir, output.JSON_OUTPUT_NAME)
+        news_dir = os.path.join(workdir, output.NEWS_DIR_NAME)
 
         self.assertTrue(os.path.exists(rss_path))
         self.assertTrue(os.path.exists(json_path))
+        self.assertTrue(os.path.isdir(news_dir))
 
         rss = minidom.parse(rss_path)
         self.assertEqual('rss', rss.documentElement.tagName)
@@ -45,20 +47,21 @@ class OutputTest(unittest.TestCase):
             rss.getElementsByTagName('title')[0].firstChild.nodeValue)
 
         with open(json_path, encoding='utf-8') as handle:
-            feed = json.load(handle)
-        self.assertEqual('https://jsonfeed.org/version/1.1', feed['version'])
-        self.assertEqual('test planet', feed['title'])
-        self.assertEqual(12, len(feed['items']))
-        self.assertEqual('tag:planet.intertwingly.net,2006:testfeed3/2',
-            feed['items'][0]['id'])
-        self.assertEqual('Sam Ruby',
-            feed['items'][0]['_source']['title'])
+            index = json.load(handle)
+        self.assertEqual(12, index['total'])
+        self.assertEqual('news/1.json', index['urls'][0])
+        self.assertEqual('news/12.json', index['urls'][11])
+
+        with open(os.path.join(workdir, index['urls'][0]), encoding='utf-8') as handle:
+            first = json.load(handle)
+        self.assertEqual('tag:planet.intertwingly.net,2006:testfeed3/2', first['id'])
+        self.assertEqual('Sam Ruby', first['source']['title'])
 
     def test_output_names_are_fixed_constants(self):
         self.assertEqual('news.xml', output.RSS_OUTPUT_NAME)
-        self.assertEqual('feed.json', output.JSON_OUTPUT_NAME)
+        self.assertEqual('news-index.json', output.JSON_OUTPUT_NAME)
         self.assertEqual(
-            ('news.xml', 'feed.json'),
+            ('news.xml', 'news-index.json'),
             output.OUTPUT_FILE_NAMES)
         self.assertEqual(
             ('rss.xml', 'feed.json'),
@@ -129,11 +132,16 @@ class OutputTest(unittest.TestCase):
             [node.getAttribute('url') for node in sources])
 
         with open(os.path.join(workdir, output.JSON_OUTPUT_NAME), encoding='utf-8') as handle:
-            feed = json.load(handle)
+            index = json.load(handle)
+        with open(os.path.join(workdir, index['urls'][0]), encoding='utf-8') as handle:
+            first = json.load(handle)
+        with open(os.path.join(workdir, index['urls'][1]), encoding='utf-8') as handle:
+            second = json.load(handle)
 
-        self.assertEqual('http://example.com/post-1.jpg', feed['items'][0]['image'])
-        self.assertEqual('http://example.org/source.png', feed['items'][1]['image'])
-        self.assertEqual('http://example.org/source.png', feed['items'][1]['_source']['screenshot'])
+        self.assertEqual('http://example.com/post-1.jpg', first['image']['url'])
+        self.assertEqual('http://example.com/', first['source']['url'])
+        self.assertEqual('http://example.org/source.png', second['image']['url'])
+        self.assertEqual('http://example.org/', second['source']['url'])
 
     def test_apply_writes_rss_metadata_with_dates_and_author(self):
         config.load(configfile)
@@ -395,7 +403,7 @@ class OutputTest(unittest.TestCase):
         )
 
         self.assertEqual("http://example.com/from-first-link", feed["home_page_url"])
-        self.assertEqual("http://example.com/from-first-link/feed.json", feed["feed_url"])
+        self.assertEqual("http://example.com/from-first-link/news-index.json", feed["feed_url"])
 
     def test_render_rss_escapes_cdata_terminator_sequences(self):
         rss = output.render_rss({
