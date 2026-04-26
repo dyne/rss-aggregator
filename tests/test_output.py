@@ -455,3 +455,33 @@ class OutputTest(unittest.TestCase):
         self.assertTrue(os.path.exists(keep_path))
         self.assertTrue(os.path.exists(os.path.join(workdir, output.RSS_OUTPUT_NAME)))
         self.assertTrue(os.path.exists(os.path.join(workdir, output.JSON_OUTPUT_NAME)))
+
+    def test_apply_rewrites_news_dir_and_removes_stale_numeric_entries(self):
+        config.load(configfile)
+        news_dir = os.path.join(workdir, output.NEWS_DIR_NAME)
+        os.makedirs(news_dir, exist_ok=True)
+        stale_path = os.path.join(news_dir, "999.json")
+        keep_path = os.path.join(news_dir, "README.txt")
+        with open(stale_path, "w", encoding="utf-8") as handle:
+            handle.write("{}")
+        with open(keep_path, "w", encoding="utf-8") as handle:
+            handle.write("keep")
+
+        doc = (
+            '<feed xmlns="http://www.w3.org/2005/Atom" '
+            'xmlns:planet="http://planet.intertwingly.net/">'
+            '<title>One item feed</title>'
+            '<entry>'
+            '<id>tag:example.com,2026:1</id>'
+            '<title>Entry</title>'
+            '<updated>2026-04-24T12:00:00Z</updated>'
+            '<link rel="alternate" href="http://example.com/post-1" />'
+            '</entry>'
+            '</feed>'
+        )
+        splice.apply(doc)
+
+        self.assertFalse(os.path.exists(stale_path))
+        self.assertTrue(os.path.exists(keep_path))
+        self.assertTrue(os.path.exists(os.path.join(news_dir, "1.json")))
+        self.assertFalse(os.path.exists(os.path.join(news_dir, "2.json")))
