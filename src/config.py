@@ -170,7 +170,10 @@ def feed():
 def feedtype():
     if parser.has_option('Planet', 'feedtype'):
         return parser.get('Planet', 'feedtype')
-    elif feed() and feed().find('rss')>=0:
+    elif parser.has_option('Planet', 'feed'):
+        if feed() and feed().find('rss')>=0:
+            return 'rss'
+    elif link():
         return 'rss'
 
 def subscriptions():

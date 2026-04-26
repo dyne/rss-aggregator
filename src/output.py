@@ -10,7 +10,7 @@ from xml.sax.saxutils import escape
 
 from . import config, media
 
-RSS_OUTPUT_NAME = "rss.xml"
+RSS_OUTPUT_NAME = "news.xml"
 JSON_OUTPUT_NAME = "feed.json"
 OUTPUT_FILE_NAMES = (RSS_OUTPUT_NAME, JSON_OUTPUT_NAME)
 
