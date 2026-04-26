@@ -313,6 +313,22 @@ def render_news_entry(entry, image_loader=None):
     ) + "\n"
 
 
+def render_news_index(entries):
+    """Render the compact news index manifest as JSON text."""
+    urls = [
+        news_entry_relative_url(position)
+        for position in range(1, len(entries) + 1)
+    ]
+    return json.dumps(
+        {
+            "total": len(entries),
+            "urls": urls,
+        },
+        indent=2,
+        ensure_ascii=False,
+    ) + "\n"
+
+
 def _build_feed_dict(doc):
     """Build the intermediate feed model shared by RSS and JSON serializers."""
     feed = doc.documentElement
