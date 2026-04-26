@@ -480,11 +480,29 @@ def write_outputs(doc):
 
     news_dir = os.path.join(output_dir, NEWS_DIR_NAME)
     os.makedirs(news_dir, exist_ok=True)
+    expected_entry_names = set()
     for position, entry in enumerate(feed["entries"], start=1):
-        news_entry_path = os.path.join(news_dir, news_entry_name(position))
-        with open(news_entry_path, "w", encoding="utf-8") as handle:
+        entry_name = news_entry_name(position)
+        expected_entry_names.add(entry_name)
+        news_entry_path = os.path.join(news_dir, entry_name)
+        tmp_path = os.path.join(news_dir, ".%s.tmp" % entry_name)
+        with open(tmp_path, "w", encoding="utf-8") as handle:
             handle.write(render_news_entry(entry))
+        os.replace(tmp_path, news_entry_path)
+
+    # Remove stale numbered entries while preserving unrelated files.
+    for entry_name in os.listdir(news_dir):
+        if not entry_name.endswith(".json"):
+            continue
+        stem = entry_name[:-5]
+        if not stem.isdigit():
+            continue
+        if entry_name in expected_entry_names:
+            continue
+        os.remove(os.path.join(news_dir, entry_name))
 
     news_index_path = os.path.join(output_dir, JSON_OUTPUT_NAME)
-    with open(news_index_path, "w", encoding="utf-8") as handle:
+    tmp_index_path = os.path.join(output_dir, ".%s.tmp" % JSON_OUTPUT_NAME)
+    with open(tmp_index_path, "w", encoding="utf-8") as handle:
         handle.write(render_news_index(feed["entries"]))
+    os.replace(tmp_index_path, news_index_path)
