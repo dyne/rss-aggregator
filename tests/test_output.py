@@ -369,6 +369,16 @@ class OutputTest(unittest.TestCase):
             rendered,
         )
 
+    def test_render_news_index_handles_empty_and_multiple_entries(self):
+        self.assertEqual(
+            {"total": 0, "urls": []},
+            json.loads(output.render_news_index([])),
+        )
+        self.assertEqual(
+            {"total": 3, "urls": ["news/1.json", "news/2.json", "news/3.json"]},
+            json.loads(output.render_news_index([{"id": "a"}, {"id": "b"}, {"id": "c"}])),
+        )
+
     def test_build_feed_model_prefers_link_fallbacks_for_json(self):
         config.load(configfile)
         feed = output.build_feed_model(
