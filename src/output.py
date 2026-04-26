@@ -11,11 +11,11 @@ from xml.sax.saxutils import escape
 from . import config, media
 
 RSS_OUTPUT_NAME = "news.xml"
-JSON_OUTPUT_NAME = "feed.json"
-OUTPUT_FILE_NAMES = (RSS_OUTPUT_NAME, JSON_OUTPUT_NAME)
-LEGACY_OUTPUT_FILE_NAMES = ("rss.xml", "feed.json")
 NEWS_DIR_NAME = "news"
 NEWS_INDEX_NAME = "news-index.json"
+JSON_OUTPUT_NAME = NEWS_INDEX_NAME
+OUTPUT_FILE_NAMES = (RSS_OUTPUT_NAME, JSON_OUTPUT_NAME)
+LEGACY_OUTPUT_FILE_NAMES = ("rss.xml", "feed.json")
 
 
 def _direct_children(node, name):
@@ -478,6 +478,13 @@ def write_outputs(doc):
     with open(rss_path, "w", encoding="utf-8") as handle:
         handle.write(render_rss(feed))
 
-    json_path = os.path.join(output_dir, JSON_OUTPUT_NAME)
-    with open(json_path, "w", encoding="utf-8") as handle:
-        handle.write(render_json(feed))
+    news_dir = os.path.join(output_dir, NEWS_DIR_NAME)
+    os.makedirs(news_dir, exist_ok=True)
+    for position, entry in enumerate(feed["entries"], start=1):
+        news_entry_path = os.path.join(news_dir, news_entry_name(position))
+        with open(news_entry_path, "w", encoding="utf-8") as handle:
+            handle.write(render_news_entry(entry))
+
+    news_index_path = os.path.join(output_dir, JSON_OUTPUT_NAME)
+    with open(news_index_path, "w", encoding="utf-8") as handle:
+        handle.write(render_news_index(feed["entries"]))
