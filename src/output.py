@@ -215,7 +215,9 @@ def _content_payload(node, name):
     payload = _child_xml(element)
     if not payload:
         payload = _text(element)
-    return _render_content_text(payload, content_type), content_type
+    if config.render_html():
+        payload = _render_content_text(payload, content_type)
+    return payload, content_type
 
 
 def _links(node):

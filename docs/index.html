@@ -163,6 +163,53 @@
         return entry.image.url || "";
       }
 
+      function looksLikeHtml(value) {
+        return /<[a-z][\s\S]*>/i.test(value || "") || /&lt;[a-z][\s\S]*&gt;/i.test(value || "");
+      }
+
+      function decodeHtmlEntities(value) {
+        const textarea = document.createElement("textarea");
+        textarea.innerHTML = value;
+        return textarea.value;
+      }
+
+      function renderSummary(summaryNode, value) {
+        const htmlTags = new Set(["B", "BLOCKQUOTE", "BR", "CODE", "DIV", "EM", "I", "LI", "OL", "P", "PRE", "SPAN", "STRONG", "UL"]);
+
+        if (!looksLikeHtml(value)) {
+          summaryNode.textContent = value || "";
+          return;
+        }
+
+        const template = document.createElement("template");
+        template.innerHTML = decodeHtmlEntities(value);
+
+        function cleanNode(node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return document.createTextNode(node.textContent || "");
+          }
+          if (node.nodeType !== Node.ELEMENT_NODE || !htmlTags.has(node.tagName)) {
+            const fragment = document.createDocumentFragment();
+            for (const child of node.childNodes) {
+              fragment.appendChild(cleanNode(child));
+            }
+            return fragment;
+          }
+
+          const element = document.createElement(node.tagName.toLowerCase());
+          for (const child of node.childNodes) {
+            element.appendChild(cleanNode(child));
+          }
+          return element;
+        }
+
+        const fragment = document.createDocumentFragment();
+        for (const child of template.content.childNodes) {
+          fragment.appendChild(cleanNode(child));
+        }
+        summaryNode.replaceChildren(fragment);
+      }
+
       function renderEntry(entry) {
         const link = document.createElement("a");
         link.className = "news-pill";
@@ -187,9 +234,9 @@
         title.textContent = entry.title || entry.url || "Untitled";
         text.appendChild(title);
 
-        const summary = document.createElement("p");
+        const summary = document.createElement("div");
         summary.className = "news-summary";
-        summary.textContent = entry.summary || "";
+        renderSummary(summary, entry.summary || "");
         text.appendChild(summary);
 
         const metaParts = [];

@@ -33,6 +33,9 @@ Below is the maintained set of built-in planet configuration parameters.
 > output_dir  
 > Directory where Venus writes output feeds
 >
+> render_html  
+> Boolean toggle that renders HTML/XHTML `summary`, `content`, and `title` fields to plain text before writing built-in outputs. Defaults to `false`, preserving normalized feed markup.
+>
 > <!-- -->
 >
 > excerpt  

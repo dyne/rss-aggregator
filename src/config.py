@@ -94,6 +94,16 @@ def __init__():
             return str(raw).lower() in ('1', 'true', 'yes', 'on')
         setattr(config, name, value)
 
+    # define a boolean planet-level variable
+    def define_planet_bool(name, default=False):
+        def value(default=default):
+            raw = get(None, name, default and 'true' or 'false')
+            if isinstance(raw, bool):
+                return raw
+            return str(raw).lower() in ('1', 'true', 'yes', 'on')
+        setattr(config, name, value)
+        planet_predefined_options.append(name)
+
     # planet wide options
     define_planet('name', "Unconfigured Planet")
     define_planet('link', '')
@@ -108,6 +118,7 @@ def __init__():
     define_planet('owner_email', '')
     define_planet('output_dir', 'output')
     define_planet('spider_threads', 0) 
+    define_planet_bool('render_html', False)
 
     define_planet_int('new_feed_items', 0) 
     define_planet_int('feed_timeout', 20)

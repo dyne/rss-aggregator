@@ -407,8 +407,40 @@ class OutputTest(unittest.TestCase):
         self.assertEqual("http://example.com/from-first-link", feed["home_page_url"])
         self.assertEqual("http://example.com/from-first-link/news-index.json", feed["feed_url"])
 
-    def test_build_feed_model_renders_html_summary_as_text(self):
+    def test_build_feed_model_preserves_html_summary_by_default(self):
         config.load(configfile)
+        feed = output.build_feed_model(
+            '<feed xmlns="http://www.w3.org/2005/Atom">'
+            '<title>HTML Summary</title>'
+            '<entry>'
+            '<id>tag:example.com,2026:html-summary</id>'
+            '<title>Entry</title>'
+            '<updated>2026-04-24T12:00:00Z</updated>'
+            '<link href="http://example.com/entry" />'
+            '<summary type="xhtml">'
+            '<div xmlns="http://www.w3.org/1999/xhtml">Lead<br />Tail</div>'
+            '</summary>'
+            '</entry>'
+            '<entry>'
+            '<id>tag:example.com,2026:escaped-html-summary</id>'
+            '<title>Escaped Entry</title>'
+            '<updated>2026-04-24T11:00:00Z</updated>'
+            '<link href="http://example.com/escaped" />'
+            '<summary type="html">&lt;div&gt;Alpha&lt;br /&gt;Beta&lt;/div&gt;</summary>'
+            '</entry>'
+            '</feed>'
+        )
+
+        self.assertEqual(
+            '<div xmlns="http://www.w3.org/1999/xhtml">Lead<br/>Tail</div>',
+            feed["entries"][0]["summary"])
+        self.assertEqual(
+            '&lt;div&gt;Alpha&lt;br /&gt;Beta&lt;/div&gt;',
+            feed["entries"][1]["summary"])
+
+    def test_build_feed_model_renders_html_summary_as_text_when_enabled(self):
+        config.load(configfile)
+        config.parser.set("Planet", "render_html", "true")
         feed = output.build_feed_model(
             '<feed xmlns="http://www.w3.org/2005/Atom">'
             '<title>HTML Summary</title>'

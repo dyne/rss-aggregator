@@ -34,8 +34,8 @@ Each numbered entry keeps the normalized per-item data:
   "id": "tag:example.com,2026:1",
   "url": "https://example.com/article",
   "title": "Example title",
-  "summary": "Plain-text summary",
-  "content": "Optional plain-text content",
+  "summary": "Summary text or normalized feed HTML",
+  "content": "Optional content text or normalized feed HTML",
   "image": {
     "url": "https://example.com/image.jpg",
     "mime_type": "image/jpeg",
@@ -48,7 +48,7 @@ Each numbered entry keeps the normalized per-item data:
 }
 ```
 
-Fields are omitted when unavailable. `summary` and `content` are plain text in the JSON output.
+Fields are omitted when unavailable. By default, `summary` and `content` preserve normalized feed text or HTML. Set `render_html = true` in `[Planet]` to render HTML/XHTML fields to plain text before writing output.
 
 ### Image embedding and cache behavior
 
