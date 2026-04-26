@@ -8,7 +8,7 @@ import time, calendar, re, os, urllib.parse, urllib.request, urllib.error
 from xml.dom import minidom
 # Planet modules
 import src as planet
-from . import config, filtering, media, net, reconstitute, scrub, storage
+from . import config, filtering, lemmy, media, net, reconstitute, scrub, storage
 from src import feedparser
 import socket
 from io import BytesIO, StringIO
@@ -176,6 +176,8 @@ def writeCache(feed_uri, feed_info, data):
 
     # perform user configured scrub operations on the data
     scrub.scrub(feed_uri, data)
+    if config.lemmy(feed_uri):
+        lemmy.rewrite_entries(data.entries)
 
     from src import idindex
     global index

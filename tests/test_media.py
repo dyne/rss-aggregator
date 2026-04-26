@@ -53,6 +53,30 @@ class MediaTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             media.fetch_open_graph_image('file:///tmp/page.html')
 
+    def test_fetch_page_metadata_rejects_unsafe_scheme(self):
+        with self.assertRaises(ValueError):
+            media.fetch_page_metadata('file:///tmp/page.html')
+
+    def test_fetch_page_metadata_reads_title_description_and_image(self):
+        response = mock.Mock()
+        response.headers.get.return_value = 'text/html; charset=utf-8'
+        response.read.side_effect = [
+            (
+                b'<html><head>'
+                b'<title>Fallback title</title>'
+                b'<meta property="og:title" content="Open Graph title" />'
+                b'<meta name="description" content="Short summary" />'
+                b'<meta property="og:image" content="/cover.png" />'
+                b'</head><body></body></html>'
+            ),
+            b'',
+        ]
+        with mock.patch('urllib.request.urlopen', return_value=response):
+            metadata = media.fetch_page_metadata('http://example.com/post')
+        self.assertEqual('Open Graph title', metadata['title'])
+        self.assertEqual('Short summary', metadata['summary'])
+        self.assertEqual('http://example.com/cover.png', metadata['image'])
+
     def test_feed_screenshot_prefers_feed_metadata_over_cache(self):
         feed = {
             'logo': 'http://example.com/logo.png',

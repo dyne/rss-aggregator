@@ -44,6 +44,9 @@ Below is the maintained set of built-in planet configuration parameters.
 > sed  
 > Short name of one built-in cleanup script from `filters/stripAd/`. The maintained values are `feedburner`, `google_ad_map`, and `yahoo`.
 >
+> lemmy  
+> Boolean toggle that rewrites Lemmy wrapper posts to the first upstream article link and fills the entry from the upstream page metadata.
+>
 > <!-- -->
 >
 > items_per_page  
@@ -101,7 +104,7 @@ Values placed in this section are used as default values for all sections. While
 All sections other than `planet` or `DEFAULT` are treated as subscriptions and
 typically take the form of a URI.
 
-The most common options here are `name`, content and normalization overrides, and the built-in filtering options `excerpt`, `regexp`, and `sed`.
+The most common options here are `name`, content and normalization overrides, and the built-in filtering options `excerpt`, `regexp`, `sed`, and `lemmy`.
 
 [Normalization overrides](normalization.md#overrides) can also be defined here.
 

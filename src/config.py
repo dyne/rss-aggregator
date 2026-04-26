@@ -28,7 +28,7 @@ from . import output
 
 parser = ConfigParser(interpolation=None)
 
-planet_predefined_options = ['excerpt', 'regexp', 'sed']
+planet_predefined_options = ['excerpt', 'regexp', 'sed', 'lemmy']
 SED_FILTERS = {
     'feedburner': 'stripAd/feedburner.sed',
     'google_ad_map': 'stripAd/google_ad_map.sed',
@@ -130,6 +130,7 @@ def __init__():
     define_tmpl_bool('excerpt', False)
     define_tmpl('regexp', '')
     define_tmpl('sed', '')
+    define_tmpl_bool('lemmy', False)
 
 def load(config_files):
     """ initialize and load a configuration"""

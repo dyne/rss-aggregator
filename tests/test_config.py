@@ -64,6 +64,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual('bar', config.regexp('feed2'))
         self.assertEqual('', config.sed('feed1'))
         self.assertEqual('yahoo', config.sed('feed2'))
+        self.assertEqual(False, config.lemmy('feed1'))
         self.assertEqual('stripAd/yahoo.sed', config.sed_filter('feed2'))
 
     # ints
@@ -80,6 +81,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual('mars', config.regexp('feed2'))
         self.assertEqual('yahoo', config.sed('feed1'))
         self.assertEqual('feedburner', config.sed('feed2'))
+        self.assertEqual(False, config.lemmy('feed1'))
         self.assertEqual('stripAd/yahoo.sed', config.sed_filter('feed1'))
         self.assertEqual('stripAd/feedburner.sed', config.sed_filter('feed2'))
 
@@ -172,3 +174,17 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(False, config.excerpt('feed-false'))
         self.assertEqual(False, config.excerpt('feed-zero'))
         self.assertEqual(False, config.excerpt('feed-off'))
+
+    def test_lemmy_boolean_parsing_uses_supported_spellings(self):
+        path = self.write_config(
+            '[Planet]\n'
+            'lemmy = yes\n'
+            '\n'
+            '[feed-one]\n'
+            '\n'
+            '[feed-two]\n'
+            'lemmy = off\n'
+        )
+        config.load(path)
+        self.assertEqual(True, config.lemmy('feed-one'))
+        self.assertEqual(False, config.lemmy('feed-two'))
