@@ -2,8 +2,8 @@
 
 The maintained product shape is intentionally small: run `planet.py` or the
 packaged `rss-aggregator` command with one local INI file, list subscriptions
-directly in that file, and Venus will write `rss.xml` plus `feed.json` and
-exit.
+directly in that file, and Venus will write `news.xml`, `news-index.json`, and
+numbered `news/*.json` entries, then exit.
 
 - [Getting started](installation.md)
 - Basic Features

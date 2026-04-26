@@ -31,7 +31,7 @@ Below is the maintained set of built-in planet configuration parameters.
 > Where cached feeds are stored
 >
 > output_dir  
-> Directory where Venus writes `rss.xml` and `feed.json`
+> Directory where Venus writes `news.xml`, `news-index.json`, and numbered `news/*.json` entries
 >
 > <!-- -->
 >
@@ -50,7 +50,7 @@ Below is the maintained set of built-in planet configuration parameters.
 > <!-- -->
 >
 > items_per_page  
-> How many items to include in the built-in output files
+> How many items to include in `news.xml` and in numbered `news/*.json` output
 >
 > ~~days_per_page~~  
 > How many complete days of posts to put on each page This is the absolute, hard limit (over the item limit)

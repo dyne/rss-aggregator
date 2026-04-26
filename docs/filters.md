@@ -1,6 +1,6 @@
 ## Filters
 
-Venus keeps filtering as a small built-in part of feed configuration. Entries are filtered while a feed is fetched and normalized, before they are written to the cache and before `rss.xml` or `feed.json` are generated.
+Venus keeps filtering as a small built-in part of feed configuration. Entries are filtered while a feed is fetched and normalized, before they are written to the cache and before `news.xml` or numbered JSON outputs are generated.
 
 Filters operate on individual normalized entries, not on final output files.
 
@@ -19,7 +19,7 @@ Keeps only entries whose normalized text matches the given regular expression. T
 Runs one built-in cleanup script from [the stripAd directory](../filters/stripAd/). Supported values are `feedburner`, `google_ad_map`, and `yahoo`.
 
 `lemmy = true`  
-Treats the feed as a Lemmy community wrapper feed. Venus discards the local Lemmy post shell, picks the first upstream article URL, fetches bounded page metadata from that upstream page, and rewrites the cached entry so `rss.xml` and `feed.json` point directly to the upstream source.
+Treats the feed as a Lemmy community wrapper feed. Venus discards the local Lemmy post shell, picks the first upstream article URL, fetches bounded page metadata from that upstream page, and rewrites the cached entry so `news.xml` and numbered JSON entries point directly to the upstream source.
 
 Example:
 

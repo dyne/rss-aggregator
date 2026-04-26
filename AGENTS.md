@@ -6,7 +6,7 @@ Venus is a Python feed aggregator. `planet.py` is the only supported command
 entry point. Core implementation lives in `src/`, with a minimal helper
 module in `src/shell/` used only by the maintained built-in filter paths.
 Built-in output generation lives in `src/output.py` and always writes
-`rss.xml` plus `feed.json`. Tests are in `tests/`, with fixtures under
+`news.xml` plus `news-index.json` and numbered `news/*.json` entries. Tests are in `tests/`, with fixtures under
 `tests/data/`. User-facing documentation is Markdown in `docs/`, maintained
 filter helpers live in `filters/`, and sample configurations live in
 `examples/`.
@@ -76,10 +76,10 @@ in `pyproject.toml` or `docs/`.
 ## Maintained Product Shape
 
 Keep the product surface narrow: Venus aggregates feeds and emits built-in
-`rss.xml` and `feed.json` outputs. Template backends and themed output files
-are no longer part of the maintained runtime. Media enrichment is limited to
-feed-declared images plus bounded source-page Open Graph lookups cached through
-the normal feed metadata path.
+`news.xml`, `news-index.json`, and numbered `news/*.json` outputs. Template
+backends and themed output files are no longer part of the maintained runtime.
+Media enrichment is limited to feed-declared images plus bounded source-page
+Open Graph lookups cached through the normal feed metadata path.
 
 The maintained filter contract is also narrow: use built-in `excerpt`,
 `regexp`, and `sed` config options instead of generic `filters = ...`,
